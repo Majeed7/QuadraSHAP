@@ -1,7 +1,9 @@
 import pytest
 import numpy as np
 
+from pgshapley.treeshap.base import TreeShapBackend
 from pgshapley.treeshap.product_games import ProductGamesTreeShapBackend
+from pgshapley.treeshap.quadrature_tree import QuadratureTreeShapBackend
 from pgshapley.treeshap.sklearn import sklearn_to_unified
 
 from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
@@ -9,19 +11,25 @@ from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGam
 from tests.naive_tree_backend import naive_tree_shap_values
 
 
-def _phi_matrix_methods():
+def _backend_factories():
+    """All TreeSHAP backends to stress-test against the naive enumerator."""
     np_obj = ProductGamesShapleyNumpy()
-    yield pytest.param(np_obj.phi_matrix_prefix_scan, id="numpy_prefix_scan")
-    yield pytest.param(np_obj.phi_matrix_logspace, id="numpy_logspace")
+
+    def _pg(fn):
+        return lambda: ProductGamesTreeShapBackend(phi_matrix_fn=fn, batch_size=64)
+
+    yield pytest.param(_pg(np_obj.phi_matrix_prefix_scan), id="pg_numpy_prefix_scan")
+    yield pytest.param(_pg(np_obj.phi_matrix_logspace), id="pg_numpy_logspace")
     if JAX_AVAILABLE:
         jax_obj = ProductGamesShapleyJax()
-        yield pytest.param(jax_obj.phi_matrix_prefix_scan, id="jax_prefix_scan")
-        yield pytest.param(jax_obj.phi_matrix_logspace, id="jax_logspace")
+        yield pytest.param(_pg(jax_obj.phi_matrix_prefix_scan), id="pg_jax_prefix_scan")
+        yield pytest.param(_pg(jax_obj.phi_matrix_logspace), id="pg_jax_logspace")
+    yield pytest.param(lambda: QuadratureTreeShapBackend(), id="quadrature_tree")
 
 
-@pytest.mark.parametrize("phi_fn", list(_phi_matrix_methods()))
+@pytest.mark.parametrize("backend_factory", list(_backend_factories()))
 @pytest.mark.parametrize("seed", [0, 1, 2, 3, 4])
-def test_backend_matches_naive_decision_tree_regression(phi_fn, seed):
+def test_backend_matches_naive_decision_tree_regression(backend_factory, seed):
     from sklearn.datasets import make_regression
     from sklearn.tree import DecisionTreeRegressor
 
@@ -36,7 +44,7 @@ def test_backend_matches_naive_decision_tree_regression(phi_fn, seed):
 
     ens = sklearn_to_unified(model)
 
-    backend = ProductGamesTreeShapBackend(phi_matrix_fn=phi_fn, batch_size=64)
+    backend: TreeShapBackend = backend_factory()
     backend.prepare(ens)
 
     X_test = X[rng.choice(X.shape[0], size=5, replace=False)]
@@ -47,9 +55,9 @@ def test_backend_matches_naive_decision_tree_regression(phi_fn, seed):
     np.testing.assert_allclose(sv_fast, sv_naive, atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.parametrize("phi_fn", list(_phi_matrix_methods()))
+@pytest.mark.parametrize("backend_factory", list(_backend_factories()))
 @pytest.mark.parametrize("seed", [0, 1, 2])
-def test_backend_matches_naive_random_forest_regression(phi_fn, seed):
+def test_backend_matches_naive_random_forest_regression(backend_factory, seed):
     from sklearn.datasets import make_regression
     from sklearn.ensemble import RandomForestRegressor
 
@@ -68,7 +76,7 @@ def test_backend_matches_naive_random_forest_regression(phi_fn, seed):
 
     ens = sklearn_to_unified(model)
 
-    backend = ProductGamesTreeShapBackend(phi_matrix_fn=phi_fn, batch_size=64)
+    backend: TreeShapBackend = backend_factory()
     backend.prepare(ens)
 
     X_test = X[rng.choice(X.shape[0], size=4, replace=False)]

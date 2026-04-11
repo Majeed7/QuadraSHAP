@@ -7,6 +7,7 @@ import numpy as np
 
 from .base import TreeShapBackend
 from .product_games import ProductGamesTreeShapBackend
+from .quadrature_tree import QuadratureTreeShapBackend
 from .sklearn import sklearn_to_unified
 
 
@@ -57,6 +58,7 @@ class TreeExplainer:
         self.feature_names = feature_names
 
         # Extended options
+        self.tree_solver = deprecated_options.pop("tree_solver", "product_games")
         self.backend_method = deprecated_options.pop("backend_method", "numpy_prefix_scan")
         self.batch_size = deprecated_options.pop("batch_size", 256)
         self.m_q = deprecated_options.pop("m_q", None)
@@ -79,12 +81,21 @@ class TreeExplainer:
         # Convert model to unified representation
         self._unified = sklearn_to_unified(model, feature_names=feature_names)
 
-        phi_fn = _default_phi_matrix_fn(self.backend_method)
-        self._backend: TreeShapBackend = ProductGamesTreeShapBackend(
-            phi_matrix_fn=phi_fn,
-            m_q=self.m_q,
-            batch_size=self.batch_size,
-        )
+        solver = self.tree_solver.lower()
+        if solver == "product_games":
+            phi_fn = _default_phi_matrix_fn(self.backend_method)
+            self._backend: TreeShapBackend = ProductGamesTreeShapBackend(
+                phi_matrix_fn=phi_fn,
+                m_q=self.m_q,
+                batch_size=self.batch_size,
+            )
+        elif solver == "quadrature_tree":
+            self._backend = QuadratureTreeShapBackend(m_q=self.m_q)
+        else:
+            raise ValueError(
+                f"Unknown tree_solver '{self.tree_solver}'. Expected one of: "
+                "product_games, quadrature_tree."
+            )
         prepared = self._backend.prepare(self._unified)
 
         self.expected_value = prepared.expected_value  # numpy.ndarray, (n_outputs,)

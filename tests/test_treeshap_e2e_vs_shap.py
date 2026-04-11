@@ -6,7 +6,11 @@ import shap
 from pgshapley import TreeExplainer as PGTreeExplainer
 
 
-def test_e2e_decision_tree_regressor_matches_shap():
+SOLVERS = ["product_games", "quadrature_tree"]
+
+
+@pytest.mark.parametrize("tree_solver", SOLVERS)
+def test_e2e_decision_tree_regressor_matches_shap(tree_solver):
     from sklearn.datasets import make_regression
     from sklearn.tree import DecisionTreeRegressor
 
@@ -14,7 +18,7 @@ def test_e2e_decision_tree_regressor_matches_shap():
     model = DecisionTreeRegressor(max_depth=4, random_state=0).fit(X, y)
 
     expl_shap = shap.TreeExplainer(model)
-    expl_pg = PGTreeExplainer(model)
+    expl_pg = PGTreeExplainer(model, tree_solver=tree_solver)
 
     np.testing.assert_allclose(expl_pg.expected_value, expl_shap.expected_value, atol=1e-10)
 
@@ -25,7 +29,8 @@ def test_e2e_decision_tree_regressor_matches_shap():
     np.testing.assert_allclose(sv_pg, sv_shap, atol=1e-6, rtol=1e-6)
 
 
-def test_e2e_random_forest_regressor_matches_shap():
+@pytest.mark.parametrize("tree_solver", SOLVERS)
+def test_e2e_random_forest_regressor_matches_shap(tree_solver):
     from sklearn.datasets import make_regression
     from sklearn.ensemble import RandomForestRegressor
 
@@ -33,7 +38,7 @@ def test_e2e_random_forest_regressor_matches_shap():
     model = RandomForestRegressor(n_estimators=8, max_depth=4, random_state=1).fit(X, y)
 
     expl_shap = shap.TreeExplainer(model)
-    expl_pg = PGTreeExplainer(model)
+    expl_pg = PGTreeExplainer(model, tree_solver=tree_solver)
 
     np.testing.assert_allclose(expl_pg.expected_value, expl_shap.expected_value, atol=1e-10)
 
@@ -44,7 +49,8 @@ def test_e2e_random_forest_regressor_matches_shap():
     np.testing.assert_allclose(sv_pg, sv_shap, atol=1e-6, rtol=1e-6)
 
 
-def test_e2e_decision_tree_classifier_matches_shap():
+@pytest.mark.parametrize("tree_solver", SOLVERS)
+def test_e2e_decision_tree_classifier_matches_shap(tree_solver):
     from sklearn.datasets import load_iris
     from sklearn.tree import DecisionTreeClassifier
 
@@ -52,7 +58,7 @@ def test_e2e_decision_tree_classifier_matches_shap():
     model = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
 
     expl_shap = shap.TreeExplainer(model)
-    expl_pg = PGTreeExplainer(model)
+    expl_pg = PGTreeExplainer(model, tree_solver=tree_solver)
 
     np.testing.assert_allclose(expl_pg.expected_value, expl_shap.expected_value, atol=1e-10)
 
