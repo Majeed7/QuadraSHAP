@@ -62,6 +62,7 @@ class TreeExplainer:
         self.backend_method = deprecated_options.pop("backend_method", "numpy_prefix_scan")
         self.batch_size = deprecated_options.pop("batch_size", 256)
         self.m_q = deprecated_options.pop("m_q", None)
+        self.use_cpp = deprecated_options.pop("use_cpp", True)
 
         if model_output != "raw":
             raise NotImplementedError(
@@ -90,7 +91,9 @@ class TreeExplainer:
                 batch_size=self.batch_size,
             )
         elif solver == "quadrature_tree":
-            self._backend = QuadratureTreeShapBackend(m_q=self.m_q)
+            self._backend = QuadratureTreeShapBackend(
+                m_q=self.m_q, use_cpp=self.use_cpp
+            )
         else:
             raise ValueError(
                 f"Unknown tree_solver '{self.tree_solver}'. Expected one of: "

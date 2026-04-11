@@ -24,7 +24,8 @@ def _backend_factories():
         jax_obj = ProductGamesShapleyJax()
         yield pytest.param(_pg(jax_obj.phi_matrix_prefix_scan), id="pg_jax_prefix_scan")
         yield pytest.param(_pg(jax_obj.phi_matrix_logspace), id="pg_jax_logspace")
-    yield pytest.param(lambda: QuadratureTreeShapBackend(), id="quadrature_tree")
+    yield pytest.param(lambda: QuadratureTreeShapBackend(use_cpp=False), id="quadrature_tree_py")
+    yield pytest.param(lambda: QuadratureTreeShapBackend(use_cpp=True), id="quadrature_tree_cpp")
 
 
 @pytest.mark.parametrize("backend_factory", list(_backend_factories()))

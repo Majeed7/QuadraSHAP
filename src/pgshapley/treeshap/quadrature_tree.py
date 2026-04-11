@@ -24,6 +24,7 @@ import numpy as np
 
 from .base import PreparedModel, TreeShapBackend
 from .unified import UnifiedEnsemble, UnifiedTree
+from pgshapley._cpp_ext import HAS_CPP_EXT
 
 
 @dataclass
@@ -44,6 +45,9 @@ class _PreparedTreeQT:
     # Gauss-Legendre quadrature on [0, 1].
     quad_x: np.ndarray  # (m_q,)
     quad_w: np.ndarray  # (m_q,)
+
+    # Lazily-built C++ PreparedTreeQT (None until first C++ explain call).
+    cpp_data: object = None
 
 
 @dataclass
@@ -70,11 +74,18 @@ class QuadratureTreeShapBackend(TreeShapBackend):
         per tree, where ``D`` is the longest distinct-feature root-to-leaf
         path. This gives Shapley values that are exact up to floating-point
         precision; smaller ``m_q`` trades accuracy for speed.
+    use_cpp:
+        If ``True``, dispatch to the native C++ kernel
+        (``explain_trees_quadrature``) when the extension is available. If
+        ``False``, force the pure-Python/numpy DFS path even when the C++
+        kernel is built. Defaults to ``True``. The two paths are kept side
+        by side so they can be benchmarked head-to-head.
     """
 
-    def __init__(self, *, m_q: Optional[int] = None):
+    def __init__(self, *, m_q: Optional[int] = None, use_cpp: bool = True):
         super().__init__()
         self._m_q_user = m_q
+        self._use_cpp = bool(use_cpp)
 
     def _m_q_for_tree(self, D: int) -> int:
         if self._m_q_user is not None:
@@ -163,7 +174,7 @@ class QuadratureTreeShapBackend(TreeShapBackend):
             raise RuntimeError("Backend is not prepared. Call prepare() first.")
 
         ensemble = self.prepared.ensemble
-        X = np.asarray(X)
+        X = np.asarray(X, dtype=np.float64)
         if X.ndim == 1:
             X = X.reshape(1, -1)
         if X.shape[1] != ensemble.n_features:
@@ -174,110 +185,202 @@ class QuadratureTreeShapBackend(TreeShapBackend):
         n_trees_total = len(self.prepared.trees)
         n_trees = n_trees_total if tree_limit is None else min(n_trees_total, int(tree_limit))
 
+        if self._use_cpp and HAS_CPP_EXT:
+            return self._explain_cpp(X, n_trees)
+
         n_samples = X.shape[0]
         out = np.zeros((n_samples, ensemble.n_features, ensemble.n_outputs), dtype=np.float64)
 
         for t in range(n_trees):
             pt = self.prepared.trees[t]
-            for s in range(n_samples):
-                out[s] += pt.tree_weight * self._explain_tree_sample(pt, X[s])
+            phi = self._explain_tree_batch(pt, X)
+            if pt.tree_weight == 1.0:
+                out += phi
+            else:
+                out += pt.tree_weight * phi
 
         return out
 
-    def _explain_tree_sample(self, pt: _PreparedTreeQT, x: np.ndarray) -> np.ndarray:
-        """Compute Shapley contributions of a single tree for a single sample.
+    def _build_cpp_data(self, pt: _PreparedTreeQT):
+        """Build the per-tree pybind11 PreparedTreeQT struct, lazily."""
+        from pgshapley._cpp_ext import PreparedTreeQT as CppPreparedTreeQT
 
-        Returns an ``(n_features, n_outputs)`` array (not yet scaled by
-        ``tree_weight``).
+        tree = pt.tree
+
+        # The recursion fills NaN for the root edge weight; the C++ kernel
+        # never reads that slot, but pass a finite value just in case to be
+        # robust against -ffast-math weirdness.
+        ew = pt.edge_weight.copy()
+        if ew.size > 0 and not np.isfinite(ew[0]):
+            ew[0] = 1.0
+
+        td = CppPreparedTreeQT()
+        td.children_left = np.ascontiguousarray(tree.children_left, dtype=np.int32)
+        td.children_right = np.ascontiguousarray(tree.children_right, dtype=np.int32)
+        td.feature = np.ascontiguousarray(tree.feature, dtype=np.int32)
+        td.threshold = np.ascontiguousarray(tree.threshold, dtype=np.float64)
+        td.edge_weight = np.ascontiguousarray(ew, dtype=np.float64)
+        td.values = np.ascontiguousarray(tree.values, dtype=np.float64)
+        td.postorder = np.ascontiguousarray(pt.postorder, dtype=np.int32)
+        td.quad_x = np.ascontiguousarray(pt.quad_x, dtype=np.float64)
+        td.quad_w = np.ascontiguousarray(pt.quad_w, dtype=np.float64)
+        td.n_features = int(tree.n_features)
+        td.n_outputs = int(tree.n_outputs)
+        td.tree_weight = float(pt.tree_weight)
+        return td
+
+    def _explain_cpp(self, X: np.ndarray, n_trees: int) -> np.ndarray:
+        from pgshapley._cpp_ext import explain_trees_quadrature
+
+        ensemble = self.prepared.ensemble
+        n_samples = int(X.shape[0])
+        out = np.zeros(
+            (n_samples, ensemble.n_features, ensemble.n_outputs),
+            dtype=np.float64,
+        )
+
+        cpp_trees = []
+        for t in range(n_trees):
+            pt = self.prepared.trees[t]
+            if pt.cpp_data is None:
+                pt.cpp_data = self._build_cpp_data(pt)
+            cpp_trees.append(pt.cpp_data)
+
+        explain_trees_quadrature(
+            np.ascontiguousarray(X, dtype=np.float64),
+            out,
+            cpp_trees,
+            n_trees,
+        )
+        return out
+
+    def _explain_tree_batch(self, pt: _PreparedTreeQT, X: np.ndarray) -> np.ndarray:
+        """Compute Shapley contributions for a full batch of samples on one tree.
+
+        Vectorized across samples: every numpy op processes all ``n_samples``
+        in one call, amortizing Python/numpy dispatch overhead on the hot DFS
+        path.
+
+        Parameters
+        ----------
+        pt:
+            Precomputed per-tree data.
+        X:
+            ``(n_samples, n_features)`` float64 array.
+
+        Returns
+        -------
+        phi:
+            ``(n_samples, n_features, n_outputs)`` array, not yet scaled by
+            ``pt.tree_weight``.
         """
 
         tree = pt.tree
         n_nodes = int(tree.children_left.shape[0])
         n_features = int(tree.n_features)
         n_outputs = int(tree.n_outputs)
-        qx = pt.quad_x
-        qw = pt.quad_w
+        qx = pt.quad_x                 # (m_q,)
+        one_m_qx = 1.0 - qx            # (m_q,)
+        qw = pt.quad_w                 # (m_q,)
         m_q = int(qx.shape[0])
+        n_samples = int(X.shape[0])
 
-        # Accumulators filled by the first pass.
-        G_node = np.empty((n_nodes, m_q), dtype=np.float64)
-        Delta_F = np.zeros((n_nodes, m_q), dtype=np.float64)
+        # Precomputed tree arrays (used heavily in the hot loop).
+        children_left = tree.children_left
+        children_right = tree.children_right
+        feat_arr = tree.feature
+        thr_arr = tree.threshold
 
-        # Persistent DFS state: current q / F values per feature.
-        # q defaults to 1 for features not yet seen on the current path, which
-        # makes a_r(q) = 1 and F = 0.
-        current_q = np.ones(n_features, dtype=np.float64)
-        current_F = np.zeros((n_features, m_q), dtype=np.float64)
+        # First-pass accumulators.
+        # G_node[u, s, r]: G value at node u, sample s, quadrature node r.
+        G_node = np.empty((n_nodes, n_samples, m_q), dtype=np.float64)
+        # Delta_F[u, s, r]: ΔF for the edge into node u (root slot unused).
+        Delta_F = np.zeros((n_nodes, n_samples, m_q), dtype=np.float64)
+
+        # Persistent DFS state, all vectorized across samples.
+        # q defaults to 1 off-path, so a_r(q) = 1 and F = 0.
+        current_q = np.ones((n_samples, n_features), dtype=np.float64)
+        current_F = np.zeros((n_samples, n_features, m_q), dtype=np.float64)
 
         # Current G vector as we descend the tree.
-        G_cur = np.ones(m_q, dtype=np.float64)
+        G_cur = np.ones((n_samples, m_q), dtype=np.float64)
 
         def dfs1(u: int) -> None:
             nonlocal G_cur
             # Snapshot G at this node before descending.
             G_node[u] = G_cur
 
-            l = int(tree.children_left[u])
-            r = int(tree.children_right[u])
+            l = int(children_left[u])
             if l == -1:
                 return
+            r = int(children_right[u])
 
-            f = int(tree.feature[u])
-            thr = float(tree.threshold[u])
+            f = int(feat_arr[u])
+            thr = float(thr_arr[u])
 
-            q_old = float(current_q[f])
-            F_old = current_F[f].copy()
-            a_old = (1.0 - qx) + qx * q_old  # (m_q,)
+            q_old = current_q[:, f].copy()         # (n_samples,)
+            F_old = current_F[:, f, :].copy()      # (n_samples, m_q)
+            a_old = one_m_qx + qx * q_old[:, None] # (n_samples, m_q)
 
-            for child, is_left in ((l, True), (r, False)):
-                inv_w = float(pt.inv_edge_weight[child])
+            # Route left/right branches on feature f for every sample.
+            x_f = X[:, f]
+            sat_left = (x_f <= thr).astype(np.float64)   # (n_samples,)
+            sat_right = 1.0 - sat_left                   # (n_samples,)
+
+            for child, sat in ((l, sat_left), (r, sat_right)):
                 w_e = float(pt.edge_weight[child])
-                if is_left:
-                    sat = 1.0 if x[f] <= thr else 0.0
-                else:
-                    sat = 1.0 if x[f] > thr else 0.0
-                q_new = q_old * inv_w * sat
-                a_new = (1.0 - qx) + qx * q_new  # (m_q,)
+                inv_w = float(pt.inv_edge_weight[child])
 
-                F_new = (q_new - 1.0) / a_new
+                q_new = q_old * (inv_w * sat)             # (n_samples,)
+                a_new = one_m_qx + qx * q_new[:, None]    # (n_samples, m_q)
+
+                F_new = (q_new[:, None] - 1.0) / a_new    # (n_samples, m_q)
                 Delta_F[child] = F_new - F_old
 
                 G_saved = G_cur
-                G_cur = G_cur * w_e * (a_new / a_old)
-                current_q[f] = q_new
-                current_F[f] = F_new
+                G_cur = G_cur * (w_e * (a_new / a_old))
+                current_q[:, f] = q_new
+                current_F[:, f, :] = F_new
 
                 dfs1(child)
 
                 G_cur = G_saved
-                current_q[f] = q_old
-                current_F[f] = F_old
+
+            # Restore state for feature f at the parent level.
+            current_q[:, f] = q_old
+            current_F[:, f, :] = F_old
 
         dfs1(0)
 
         # Second pass: bottom-up accumulation of H and Shapley values.
-        # H[u, r, :] = sum over leaves v in the subtree rooted at u of
-        #              V_v * G[v, r] (a vector of length n_outputs).
+        # H[u, s, r, k] = sum over leaves v in the subtree rooted at u of
+        #                 V_v[k] * G_node[v, s, r].
         # For each edge (u -> v) splitting on feature f:
-        #     phi[f] += sum_r w_r * H[v, r, :] * Delta_F[v, r]
-        H = np.zeros((n_nodes, m_q, n_outputs), dtype=np.float64)
-        phi = np.zeros((n_features, n_outputs), dtype=np.float64)
+        #     phi[:, f, :] += sum_r w_r * H[v, :, r, :] * Delta_F[v, :, r]
+        H = np.zeros((n_nodes, n_samples, m_q, n_outputs), dtype=np.float64)
+        phi = np.zeros((n_samples, n_features, n_outputs), dtype=np.float64)
 
-        for u in pt.postorder:
-            u = int(u)
-            l = int(tree.children_left[u])
+        # qw broadcast shape for the edge contraction: (1, m_q).
+        qw_row = qw[None, :]
+
+        for u_i in pt.postorder:
+            u = int(u_i)
+            l = int(children_left[u])
             if l == -1:
-                V_u = tree.values[u].astype(np.float64, copy=False)
-                H[u] = G_node[u][:, None] * V_u[None, :]
+                V_u = tree.values[u].astype(np.float64, copy=False)  # (n_outputs,)
+                # (n_samples, m_q, 1) * (1, 1, n_outputs) -> (n_samples, m_q, n_outputs)
+                H[u] = G_node[u][:, :, None] * V_u[None, None, :]
                 continue
 
-            r = int(tree.children_right[u])
+            r = int(children_right[u])
             H[u] = H[l] + H[r]
 
-            f = int(tree.feature[u])
+            f = int(feat_arr[u])
             for child in (l, r):
-                # sum_r w_r * H[child, r, :] * Delta_F[child, r]
-                contrib = (qw[:, None] * Delta_F[child][:, None] * H[child]).sum(axis=0)
-                phi[f] += contrib
+                # H[child]: (n_samples, m_q, n_outputs)
+                # Delta_F[child]: (n_samples, m_q)
+                # sum_r w_r * H[child, s, r, :] * Delta_F[child, s, r]
+                weight = qw_row * Delta_F[child]               # (n_samples, m_q)
+                phi[:, f, :] += (H[child] * weight[:, :, None]).sum(axis=1)
 
         return phi
