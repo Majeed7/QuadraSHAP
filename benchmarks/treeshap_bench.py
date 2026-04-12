@@ -48,7 +48,7 @@ TIMEOUT_S = 120
 N_TEST_SAMPLES = 10      # samples explained per forest
 N_MODEL_SEEDS = 3        # independent forests per (n_features, n_leaves)
 N_FEATURE_CHOICES = [10, 100]
-LEAF_SIZES = [10, 100, 1_000, 10_000, 100_000]
+LEAF_SIZES = [10, 20, 50, 100, 1_000, 10_000, 100_000]
 N_REPEATS = 3
 
 METHOD_NAMES = [
@@ -56,8 +56,8 @@ METHOD_NAMES = [
     "fasttreeshap_v1",
     "fasttreeshap_v2",
     "linear_tree_shap",
+    "shapiq",
     "pg_quadrature_tree_cpp",
-    "pg_quadrature_tree_cpp_mq_d_over_4",
 ]
 # All methods run on the same sklearn RandomForestRegressor so the tree
 # structure is identical across methods. (XGBoost SHAP was intentionally
@@ -66,7 +66,7 @@ METHOD_NAMES = [
 # Per-tree cap. Targets larger than this grow the forest instead of the tree.
 MAX_LEAVES_PER_TREE = 10_000
 # Training samples are only big enough to support the per-tree leaf cap.
-N_TRAIN_SAMPLES = 500_000
+N_TRAIN_SAMPLES = 50_000
 
 # These env vars are forced on every worker subprocess to pin all numeric
 # libraries to a single thread. Comparing single-threaded implementations

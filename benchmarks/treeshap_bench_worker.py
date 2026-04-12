@@ -170,11 +170,35 @@ def ev_pg_quad_cpp(model, expl):
     return float(np.asarray(expl.expected_value).ravel()[0])
 
 
+def build_shapiq(model):
+    from shapiq.explainer.tree import TreeExplainer
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return TreeExplainer(model=model, max_order=1)
+
+
+def explain_shapiq(expl, X):
+    results = expl.explain_X(X)
+    return np.array([r.get_n_order_values(1) for r in results])
+
+
+def ev_shapiq(model, expl):
+    # Run on a dummy sample to get the baseline
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        dummy = np.zeros((1, model.n_features_in_))
+        result = expl.explain(dummy[0])
+        return float(result.baseline_value)
+
+
 METHODS = {
     "shap":                   (build_shap,              explain_shap,              ev_shap),
     "fasttreeshap_v1":        (build_fasttreeshap_v1,   explain_fasttreeshap,      ev_fasttreeshap),
     "fasttreeshap_v2":        (build_fasttreeshap_v2,   explain_fasttreeshap,      ev_fasttreeshap),
     "linear_tree_shap":       (build_linear_tree_shap,  explain_linear_tree_shap,  ev_linear_tree_shap),
+    "shapiq":                 (build_shapiq,            explain_shapiq,            ev_shapiq),
     "pg_quadrature_tree_cpp": (build_pg_quad_cpp,       explain_pg_quad_cpp,       ev_pg_quad_cpp),
     "pg_quadrature_tree_cpp_mq_d_over_4": (
         build_pg_quad_cpp_mq_d_over_4, explain_pg_quad_cpp, ev_pg_quad_cpp,

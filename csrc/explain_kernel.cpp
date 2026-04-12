@@ -176,7 +176,6 @@ struct QuadratureTreeWorker {
     const double* thr;
     const double* ew;
     const double* tree_values;
-    const int32_t* postorder;
     const double* qx;
     const double* qw;
     int n_nodes;
@@ -193,53 +192,54 @@ struct QuadratureTreeWorker {
                           // use they match).
 
     // Scratch state, sized for the current tree.
-    std::vector<double> G_node;     // (n_nodes * m_q)
-    std::vector<double> Delta_F;    // (n_nodes * m_q)
     std::vector<double> H;          // (n_nodes * m_q * n_outputs)
     std::vector<double> current_q;  // (n_features,)
     std::vector<double> current_F;  // (n_features * m_q)
     std::vector<double> G_cur;      // (m_q,)
 
     void resize_for_tree() {
-        G_node.assign(static_cast<size_t>(n_nodes) * m_q, 0.0);
-        Delta_F.assign(static_cast<size_t>(n_nodes) * m_q, 0.0);
         H.assign(static_cast<size_t>(n_nodes) * m_q * n_outputs, 0.0);
         current_q.assign(n_features, 1.0);
         current_F.assign(static_cast<size_t>(n_features) * m_q, 0.0);
         G_cur.assign(m_q, 1.0);
     }
 
-    // Re-initialize the per-sample mutable buffers without reallocating.
     void reset_for_sample() {
         std::fill(current_q.begin(), current_q.end(), 1.0);
         std::fill(current_F.begin(), current_F.end(), 0.0);
         std::fill(G_cur.begin(), G_cur.end(), 1.0);
-        // G_node, Delta_F, H are fully overwritten in each pass; no reset
-        // needed for correctness, but the second pass relies on Delta_F being
-        // 0 at the root slot (postorder edge accumulation skips the root, so
-        // the value is never read; we leave it untouched).
     }
 
-    // First pass: descend the tree, populating G_node[u, :] and
-    // Delta_F[child, :] for every non-root node.
-    void dfs1(int u) {
-        // Snapshot G_cur into G_node[u, :].
-        std::memcpy(G_node.data() + static_cast<size_t>(u) * m_q,
-                    G_cur.data(), m_q * sizeof(double));
-
+    // Single DFS: descend the tree computing H bottom-up.  F is kept on the
+    // stack; after returning from each child we multiply Delta_F by H and
+    // accumulate into phi.
+    void dfs(int u) {
         const int l = cl[u];
+
+        double* H_u = H.data() + (static_cast<size_t>(u) * m_q) * n_outputs;
+
         if (l == -1) {
+            // Leaf: H[u, r, k] = G_cur[r] * V_u[k].
+            const double* V_u = tree_values + static_cast<size_t>(u) * n_outputs;
+            for (int ri = 0; ri < m_q; ri++) {
+                const double g = G_cur[ri];
+                double* H_row = H_u + ri * n_outputs;
+                for (int k = 0; k < n_outputs; k++) {
+                    H_row[k] = g * V_u[k];
+                }
+            }
             return;
         }
+
         const int r = cr[u];
         const int f = feat[u];
         const double thr_val = thr[u];
-
         const double q_old = current_q[f];
 
         double F_old[QT_MAX_MQ];
         double a_old[QT_MAX_MQ];
         double G_saved[QT_MAX_MQ];
+        double dF[QT_MAX_MQ];
 
         double* curF_f = current_F.data() + static_cast<size_t>(f) * m_q;
         std::memcpy(F_old, curF_f, m_q * sizeof(double));
@@ -253,6 +253,8 @@ struct QuadratureTreeWorker {
         const int children[2] = {l, r};
         const double sats[2] = {sat_left, 1.0 - sat_left};
 
+        double* phi_f = out_s + static_cast<ssize_t>(f) * out_stride_f;
+
         for (int c = 0; c < 2; c++) {
             const int child = children[c];
             const double sat = sats[c];
@@ -262,83 +264,47 @@ struct QuadratureTreeWorker {
             const double q_new = q_old * inv_w * sat;
             current_q[f] = q_new;
 
-            double* dF_c = Delta_F.data() + static_cast<size_t>(child) * m_q;
             for (int ri = 0; ri < m_q; ri++) {
                 const double a_new = (1.0 - qx[ri]) + qx[ri] * q_new;
                 const double F_new = (q_new - 1.0) / a_new;
-                dF_c[ri] = F_new - F_old[ri];
+                dF[ri] = F_new - F_old[ri];
                 curF_f[ri] = F_new;
                 G_cur[ri] = G_saved[ri] * w_e * (a_new / a_old[ri]);
             }
 
-            dfs1(child);
+            dfs(child);
+
+            // Accumulate: phi[f] += sum_r tree_weight * qw[r] * dF[r] * H[child, r, :]
+            const double* H_c = H.data() + (static_cast<size_t>(child) * m_q) * n_outputs;
+            if (n_outputs == 1) {
+                double acc = 0.0;
+                for (int ri = 0; ri < m_q; ri++) {
+                    acc += qw[ri] * dF[ri] * H_c[ri];
+                }
+                phi_f[0] += tree_weight * acc;
+            } else {
+                for (int ri = 0; ri < m_q; ri++) {
+                    const double w = tree_weight * qw[ri] * dF[ri];
+                    const double* H_row = H_c + ri * n_outputs;
+                    for (int k = 0; k < n_outputs; k++) {
+                        phi_f[k] += w * H_row[k];
+                    }
+                }
+            }
+        }
+
+        // H[u] = H[l] + H[r]
+        const double* H_l = H.data() + (static_cast<size_t>(l) * m_q) * n_outputs;
+        const double* H_r = H.data() + (static_cast<size_t>(r) * m_q) * n_outputs;
+        const size_t hu_len = static_cast<size_t>(m_q) * n_outputs;
+        for (size_t i = 0; i < hu_len; i++) {
+            H_u[i] = H_l[i] + H_r[i];
         }
 
         // Restore parent state.
         current_q[f] = q_old;
         std::memcpy(curF_f, F_old, m_q * sizeof(double));
         std::memcpy(G_cur.data(), G_saved, m_q * sizeof(double));
-    }
-
-    // Second pass: bottom-up via postorder. Computes H[u] and, at every
-    // internal node, accumulates the per-feature Shapley contributions for
-    // both outgoing edges.
-    void second_pass() {
-        for (int idx = 0; idx < n_nodes; idx++) {
-            const int u = postorder[idx];
-            const int l = cl[u];
-
-            double* H_u = H.data() + (static_cast<size_t>(u) * m_q) * n_outputs;
-
-            if (l == -1) {
-                // Leaf: H[u, r, k] = G_node[u, r] * V_u[k]
-                const double* gn = G_node.data() + static_cast<size_t>(u) * m_q;
-                const double* V_u = tree_values + static_cast<size_t>(u) * n_outputs;
-                for (int ri = 0; ri < m_q; ri++) {
-                    const double g = gn[ri];
-                    double* H_row = H_u + ri * n_outputs;
-                    for (int k = 0; k < n_outputs; k++) {
-                        H_row[k] = g * V_u[k];
-                    }
-                }
-                continue;
-            }
-
-            const int r_node = cr[u];
-            // H[u] = H[l] + H[r]
-            const double* H_l = H.data() + (static_cast<size_t>(l) * m_q) * n_outputs;
-            const double* H_r = H.data() + (static_cast<size_t>(r_node) * m_q) * n_outputs;
-            const size_t hu_len = static_cast<size_t>(m_q) * n_outputs;
-            for (size_t i = 0; i < hu_len; i++) {
-                H_u[i] = H_l[i] + H_r[i];
-            }
-
-            // Edge contributions for both children:
-            //   phi[f] += sum_r tree_weight * qw[r] * Delta_F[child, r] * H[child, r, :]
-            const int f = feat[u];
-            double* phi_f = out_s + static_cast<ssize_t>(f) * out_stride_f;
-            const int children[2] = {l, r_node};
-            for (int c = 0; c < 2; c++) {
-                const int child = children[c];
-                const double* H_c = H.data() + (static_cast<size_t>(child) * m_q) * n_outputs;
-                const double* dF_c = Delta_F.data() + static_cast<size_t>(child) * m_q;
-                if (n_outputs == 1) {
-                    double acc = 0.0;
-                    for (int ri = 0; ri < m_q; ri++) {
-                        acc += qw[ri] * dF_c[ri] * H_c[ri];
-                    }
-                    phi_f[0] += tree_weight * acc;
-                } else {
-                    for (int ri = 0; ri < m_q; ri++) {
-                        const double w = tree_weight * qw[ri] * dF_c[ri];
-                        const double* H_row = H_c + ri * n_outputs;
-                        for (int k = 0; k < n_outputs; k++) {
-                            phi_f[k] += w * H_row[k];
-                        }
-                    }
-                }
-            }
-        }
     }
 };
 
@@ -381,7 +347,6 @@ void explain_trees_quadrature(
         w.thr = tree.threshold.data();
         w.ew = tree.edge_weight.data();
         w.tree_values = tree.values.data();
-        w.postorder = tree.postorder.data();
         w.qx = tree.quad_x.data();
         w.qw = tree.quad_w.data();
         w.n_nodes = n_nodes;
@@ -397,8 +362,7 @@ void explain_trees_quadrature(
             w.out_stride_f = out_stride_f;
 
             w.reset_for_sample();
-            w.dfs1(0);
-            w.second_pass();
+            w.dfs(0);
         }
     }
 }

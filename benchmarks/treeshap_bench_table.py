@@ -1,8 +1,8 @@
 """Emit a LaTeX table from treeshap_bench_results.json.
 
-The table has one row group per feature width and, inside each, one row
-per method; columns are leaf sizes and each cell holds "time_ms / err".
-The fastest time in each column is bolded.
+The table has one row group per feature width and, inside each, two rows
+per method: the first row shows runtime (ms) and the second shows the
+worst-case additivity residual.  The fastest time in each column is bolded.
 
 Run with:
     .venv/bin/python benchmarks/treeshap_bench_table.py
@@ -23,8 +23,8 @@ METHOD_ORDER = [
     ("fasttreeshap_v1",                     r"\textsc{FastTreeSHAP v1}"),
     ("fasttreeshap_v2",                     r"\textsc{FastTreeSHAP v2}"),
     ("linear_tree_shap",                    r"\textsc{linear\_tree\_shap}"),
+    ("shapiq",                              r"\textsc{shapiq}"),
     ("pg_quadrature_tree_cpp",              r"\textbf{Quadrature} ($m_q{=}\lceil D/2 \rceil$)"),
-    ("pg_quadrature_tree_cpp_mq_d_over_4",  r"\textbf{Quadrature} ($m_q{=}d/4$)"),
 ]
 
 
@@ -32,9 +32,6 @@ def _fmt_time(t_s: float | None) -> str:
     if t_s is None:
         return "---"
     ms = t_s * 1e3
-    # At L=10 the fastest methods sit around 6--15 us, so the default
-    # .2f format collapses everything to "0.01". Use more decimals below
-    # 0.1 ms so these cells carry real information.
     if ms < 0.1:
         return f"{ms:.3f}"
     if ms < 1.0:
@@ -49,24 +46,8 @@ def _fmt_err(e: float | None) -> str:
         return "---"
     if e == 0.0:
         return r"$0$"
-    # Scientific: mantissa × 10^exp.
     mant, exp = f"{e:.0e}".split("e")
     return rf"${int(mant)}{{\cdot}}10^{{{int(exp)}}}$"
-
-
-def _cell(entry: dict | None, is_best_time: bool) -> str:
-    if entry is None:
-        return "---"
-    status = entry.get("status")
-    if status == "timeout":
-        return r"\emph{t/o}"
-    if status != "ok":
-        return "---"
-    t_str = _fmt_time(entry.get("time_s"))
-    if is_best_time and entry.get("time_s") is not None:
-        t_str = rf"\textbf{{{t_str}}}"
-    e_str = _fmt_err(entry.get("error"))
-    return f"{t_str}\\,/\\,{e_str}"
 
 
 # Maximum additivity residual for which a method's runtime is still
@@ -88,8 +69,9 @@ def main():
         for n in leaf_sizes
     ]
 
+    n_cols = len(leaf_sizes)
     lines: list[str] = []
-    col_spec = "l" + "c" * len(leaf_sizes)
+    col_spec = "l" + "c" * n_cols
     lines.append(r"\begin{table}[t]")
     lines.append(r"\centering")
     lines.append(r"\small")
@@ -110,12 +92,10 @@ def main():
 
     for wi, w in enumerate(widths):
         lines.append(
-            rf"\multicolumn{{{len(leaf_sizes) + 1}}}{{l}}{{"
+            rf"\multicolumn{{{n_cols + 1}}}{{l}}{{"
             rf"\emph{{$d = {w}$ features}}}} \\"
         )
-        # Fastest time per column, restricted to methods whose additivity
-        # residual is below EXACTNESS_THRESHOLD — awarding the speed crown
-        # to a numerically broken method is misleading.
+        # Fastest time per column, restricted to methods with good accuracy.
         best_times: dict[int, float] = {}
         for n in leaf_sizes:
             candidates = []
@@ -133,17 +113,34 @@ def main():
                 best_times[n] = min(candidates)
 
         for method_key, label in METHOD_ORDER:
-            cells = [label]
+            # Row 1: method name + times
+            time_cells = [label]
             for n in leaf_sizes:
                 entry = results[str(w)].get(str(n), {}).get(method_key)
+                if entry is None or entry.get("status") != "ok":
+                    time_cells.append("---")
+                    continue
+                t_str = _fmt_time(entry.get("time_s"))
                 is_best = (
-                    entry is not None
-                    and entry.get("status") == "ok"
-                    and entry.get("time_s") is not None
+                    entry.get("time_s") is not None
                     and entry["time_s"] == best_times.get(n, float("inf"))
                 )
-                cells.append(_cell(entry, is_best_time=is_best))
-            lines.append(" & ".join(cells) + r" \\")
+                if is_best:
+                    t_str = rf"\textbf{{{t_str}}}"
+                time_cells.append(t_str)
+            lines.append(" & ".join(time_cells) + r" \\")
+
+            # Row 2: empty label + errors in smaller font
+            err_cells = [""]
+            for n in leaf_sizes:
+                entry = results[str(w)].get(str(n), {}).get(method_key)
+                if entry is None or entry.get("status") != "ok":
+                    err_cells.append("")
+                    continue
+                e_str = _fmt_err(entry.get("error"))
+                err_cells.append(rf"{{\scriptsize {e_str}}}")
+            lines.append(" & ".join(err_cells) + r" \\[2pt]")
+
         if wi < len(widths) - 1:
             lines.append(r"\midrule")
 
