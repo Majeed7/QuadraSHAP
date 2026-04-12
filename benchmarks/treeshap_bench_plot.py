@@ -43,8 +43,8 @@ METHOD_ORDER = [
     ("fasttreeshap_v1",                     "FastTreeSHAP v1"),
     ("fasttreeshap_v2",                     "FastTreeSHAP v2"),
     ("linear_tree_shap",                    "linear_tree_shap"),
-    ("pg_quadrature_tree_cpp",              "Ours (exact, $m_q=\\lceil D/2 \\rceil$)"),
-    ("pg_quadrature_tree_cpp_mq_d_over_4",  "Ours (approx, $m_q=d/4$)"),
+    ("pg_quadrature_tree_cpp",              "Quadrature (exact, $m_q=\\lceil D/2 \\rceil$)"),
+    ("pg_quadrature_tree_cpp_mq_d_over_4",  "Quadrature (approx, $m_q=d/4$)"),
 ]
 
 # A colourblind-friendly palette. The two "ours" variants are highlighted.
