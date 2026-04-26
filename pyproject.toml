@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "TreeSHAP via product-game Shapley factors"
 readme = "README.md"
 requires-python = ">=3.11"
+# Compatible with both NumPy 1.x and 2.x at runtime. Resolvers pick the highest
+# matching version, so new installs land on 2.x; downstream users that pin
+# numpy<2 (e.g. for benchmarking against libraries that haven't migrated yet)
+# still resolve cleanly.
 dependencies = [
     "numpy>=1.24",
 ]
@@ -24,7 +28,10 @@ testing = [
 dev = ["pgshapley[jax]", {include-group = "testing"}]
 
 [build-system]
-requires = ["scikit-build-core>=0.11", "pybind11>=2.12", "numpy>=1.24"]
+# Build against NumPy 2.x: pybind11 >=2.12 emits a dual-ABI extension that
+# loads under both NumPy 1.x (>=1.19) and 2.x. Building against 1.x would
+# produce a v1-only wheel.
+requires = ["scikit-build-core>=0.11", "pybind11>=2.12", "numpy>=2.0"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]

@@ -64,9 +64,9 @@ METHOD_NAMES = [
 # dropped because it needs its own XGBoost tree format.)
 
 # Per-tree cap. Targets larger than this grow the forest instead of the tree.
-MAX_LEAVES_PER_TREE = 10_000
+MAX_LEAVES_PER_TREE = 100_000
 # Training samples are only big enough to support the per-tree leaf cap.
-N_TRAIN_SAMPLES = 50_000
+N_TRAIN_SAMPLES = 1_000_000
 
 # These env vars are forced on every worker subprocess to pin all numeric
 # libraries to a single thread. Comparing single-threaded implementations
