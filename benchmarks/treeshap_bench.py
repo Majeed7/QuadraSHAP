@@ -1,6 +1,6 @@
 """TreeSHAP benchmark.
 
-Compares SHAP, FastTreeSHAP (v1, v2), linear_tree_shap, and pgshapley's C++
+Compares SHAP, FastTreeSHAP (v1, v2), linear_tree_shap, and quadrashap's C++
 quadrature-tree kernel across 10..10^6 total leaves, for two feature widths
 (10 and 100).
 

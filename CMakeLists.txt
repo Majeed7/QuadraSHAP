@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(pgshapley_core LANGUAGES CXX)
+project(quadrashap_core LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,4 +37,4 @@ elseif(MSVC)
     target_compile_options(_core PRIVATE /O2 /fp:fast)
 endif()
 
-install(TARGETS _core DESTINATION pgshapley)
+install(TARGETS _core DESTINATION quadrashap)

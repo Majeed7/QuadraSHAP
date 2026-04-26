@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from pgshapley.treeshap.sklearn import sklearn_to_unified
+from quadrashap.treeshap.sklearn import sklearn_to_unified
 
 
 def _predict_unified(ens, X):

@@ -1,5 +1,5 @@
 """
-Compare SHAP vs pgshapley-Python vs pgshapley-C++ across tree sizes.
+Compare SHAP vs quadrashap-Python vs quadrashap-C++ across tree sizes.
 """
 
 import time
@@ -8,8 +8,8 @@ from unittest.mock import patch
 import numpy as np
 
 import shap
-from pgshapley import TreeExplainer as PGTreeExplainer
-from pgshapley._cpp_ext import HAS_CPP_EXT
+from quadrashap import TreeExplainer as PGTreeExplainer
+from quadrashap._cpp_ext import HAS_CPP_EXT
 
 
 N_FEATURES = 10
@@ -58,15 +58,15 @@ def main():
         expl_shap = shap.TreeExplainer(model)
         t_shap = _time_fn(expl_shap.shap_values, X_test, N_REPEATS)
 
-        # pgshapley Python (force Python path)
-        with patch("pgshapley.treeshap.product_games.HAS_CPP_EXT", False):
+        # quadrashap Python (force Python path)
+        with patch("quadrashap.treeshap.product_games.HAS_CPP_EXT", False):
             expl_py = PGTreeExplainer(model)
             fn_py = lambda X: expl_py.shap_values(X, check_additivity=False)
             t_py = _time_fn(fn_py, X_test, N_REPEATS)
 
-        # pgshapley C++
+        # quadrashap C++
         if HAS_CPP_EXT:
-            with patch("pgshapley.treeshap.product_games.HAS_CPP_EXT", True):
+            with patch("quadrashap.treeshap.product_games.HAS_CPP_EXT", True):
                 expl_cpp = PGTreeExplainer(model)
                 fn_cpp = lambda X: expl_cpp.shap_values(X, check_additivity=False)
                 t_cpp = _time_fn(fn_cpp, X_test, N_REPEATS)

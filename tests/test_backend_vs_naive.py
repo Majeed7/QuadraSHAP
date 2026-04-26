@@ -1,12 +1,12 @@
 import pytest
 import numpy as np
 
-from pgshapley.treeshap.base import TreeShapBackend
-from pgshapley.treeshap.product_games import ProductGamesTreeShapBackend
-from pgshapley.treeshap.quadrature_tree import QuadratureTreeShapBackend
-from pgshapley.treeshap.sklearn import sklearn_to_unified
+from quadrashap.treeshap.base import TreeShapBackend
+from quadrashap.treeshap.product_games import ProductGamesTreeShapBackend
+from quadrashap.treeshap.quadrature_tree import QuadratureTreeShapBackend
+from quadrashap.treeshap.sklearn import sklearn_to_unified
 
-from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
+from quadrashap.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
 
 from tests.naive_tree_backend import naive_tree_shap_values
 

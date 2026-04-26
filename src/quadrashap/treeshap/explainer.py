@@ -13,7 +13,7 @@ from .sklearn import sklearn_to_unified
 
 def _default_phi_matrix_fn(method: str = "numpy_prefix_scan"):
     """Select a default product-game SHAP implementation."""
-    from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
+    from quadrashap.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
 
     method = method.lower()
     if method == "numpy_prefix_scan":

@@ -24,7 +24,7 @@ import numpy as np
 
 from .base import PreparedModel, TreeShapBackend
 from .unified import UnifiedEnsemble, UnifiedTree
-from pgshapley._cpp_ext import HAS_CPP_EXT
+from quadrashap._cpp_ext import HAS_CPP_EXT
 
 
 @dataclass
@@ -203,7 +203,7 @@ class QuadratureTreeShapBackend(TreeShapBackend):
 
     def _build_cpp_data(self, pt: _PreparedTreeQT):
         """Build the per-tree pybind11 PreparedTreeQT struct, lazily."""
-        from pgshapley._cpp_ext import PreparedTreeQT as CppPreparedTreeQT
+        from quadrashap._cpp_ext import PreparedTreeQT as CppPreparedTreeQT
 
         tree = pt.tree
 
@@ -230,7 +230,7 @@ class QuadratureTreeShapBackend(TreeShapBackend):
         return td
 
     def _explain_cpp(self, X: np.ndarray, n_trees: int) -> np.ndarray:
-        from pgshapley._cpp_ext import explain_trees_quadrature
+        from quadrashap._cpp_ext import explain_trees_quadrature
 
         ensemble = self.prepared.ensemble
         n_samples = int(X.shape[0])

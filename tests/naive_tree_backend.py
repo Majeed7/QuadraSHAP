@@ -7,7 +7,7 @@ from typing import Optional
 
 import numpy as np
 
-from pgshapley.treeshap.unified import UnifiedEnsemble, UnifiedTree
+from quadrashap.treeshap.unified import UnifiedEnsemble, UnifiedTree
 
 
 def _is_leaf(tree: UnifiedTree, node: int) -> bool:

@@ -368,7 +368,7 @@ void explain_trees_quadrature(
 }
 
 PYBIND11_MODULE(_core, m) {
-    m.doc() = "C++ acceleration for pgshapley TreeSHAP";
+    m.doc() = "C++ acceleration for quadrashap TreeSHAP";
 
     py::class_<PreparedTreeData>(m, "PreparedTreeData")
         .def(py::init<>())

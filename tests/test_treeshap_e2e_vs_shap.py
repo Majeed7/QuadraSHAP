@@ -3,7 +3,7 @@ import pytest
 
 import shap
 
-from pgshapley import TreeExplainer as PGTreeExplainer
+from quadrashap import TreeExplainer as PGTreeExplainer
 
 
 SOLVERS = ["product_games", "quadrature_tree"]

@@ -7,7 +7,7 @@ import numpy as np
 
 from .base import PreparedModel, TreeShapBackend
 from .unified import UnifiedEnsemble, UnifiedTree
-from pgshapley._cpp_ext import HAS_CPP_EXT
+from quadrashap._cpp_ext import HAS_CPP_EXT
 
 
 @dataclass
@@ -280,7 +280,7 @@ class ProductGamesTreeShapBackend(TreeShapBackend):
 
     def _explain_cpp(self, X: np.ndarray, n_trees: int) -> np.ndarray:
         """Explain using the C++ extension (fast path)."""
-        from pgshapley._cpp_ext import PreparedTreeData, explain_trees
+        from quadrashap._cpp_ext import PreparedTreeData, explain_trees
 
         ensemble = self.prepared.ensemble
         n_samples = X.shape[0]

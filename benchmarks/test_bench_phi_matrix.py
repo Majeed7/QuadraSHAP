@@ -4,7 +4,7 @@ import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)
 
-from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
+from quadrashap.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
 
 
 def _phi_matrix_methods():

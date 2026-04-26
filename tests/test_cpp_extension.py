@@ -4,15 +4,15 @@ import numpy as np
 import pytest
 from unittest.mock import patch
 
-from pgshapley._cpp_ext import HAS_CPP_EXT
+from quadrashap._cpp_ext import HAS_CPP_EXT
 
 pytestmark = pytest.mark.skipif(not HAS_CPP_EXT, reason="C++ extension not available")
 
 
 def _explain_python(model, X):
     """Force Python path and return SHAP values."""
-    with patch("pgshapley.treeshap.product_games.HAS_CPP_EXT", False):
-        from pgshapley import TreeExplainer
+    with patch("quadrashap.treeshap.product_games.HAS_CPP_EXT", False):
+        from quadrashap import TreeExplainer
 
         expl = TreeExplainer(model)
         return expl.shap_values(X, check_additivity=False), expl.expected_value
@@ -20,8 +20,8 @@ def _explain_python(model, X):
 
 def _explain_cpp(model, X):
     """Use C++ path and return SHAP values."""
-    with patch("pgshapley.treeshap.product_games.HAS_CPP_EXT", True):
-        from pgshapley import TreeExplainer
+    with patch("quadrashap.treeshap.product_games.HAS_CPP_EXT", True):
+        from quadrashap import TreeExplainer
 
         expl = TreeExplainer(model)
         return expl.shap_values(X, check_additivity=False), expl.expected_value
@@ -80,7 +80,7 @@ def test_cpp_additivity():
     X, y = make_regression(n_samples=100, n_features=5, random_state=42)
     model = DecisionTreeRegressor(max_depth=5, random_state=42).fit(X, y)
 
-    from pgshapley import TreeExplainer
+    from quadrashap import TreeExplainer
 
     expl = TreeExplainer(model)
     X_test = X[:15]

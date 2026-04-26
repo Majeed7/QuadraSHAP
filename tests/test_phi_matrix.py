@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
+from quadrashap.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax, JAX_AVAILABLE
 
 if JAX_AVAILABLE:
     import jax

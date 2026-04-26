@@ -18,7 +18,7 @@ timed calls and take the median.
 
 The ``ev`` (expected value) field is the *library's own* baseline:
 
-- SHAP / FastTreeSHAP / pgshapley all use ``tree_.value[0]`` (the
+- SHAP / FastTreeSHAP / quadrashap all use ``tree_.value[0]`` (the
   bootstrap-*weighted* root mean) and expose it as
   ``explainer.expected_value``.
 - ``linear_tree_shap`` doesn't expose a baseline and doesn't read sklearn's
@@ -141,7 +141,7 @@ def ev_linear_tree_shap(model, handle):
 
 
 def build_pg_quad_cpp(model):
-    from pgshapley import TreeExplainer
+    from quadrashap import TreeExplainer
     return TreeExplainer(model, tree_solver="quadrature_tree", use_cpp=True)
 
 
@@ -154,7 +154,7 @@ def build_pg_quad_cpp_mq_d_over_4(model):
     ``n_features/4 > D/2`` it simply runs more quadrature nodes than needed
     (slower, still exact up to fp precision).
     """
-    from pgshapley import TreeExplainer
+    from quadrashap import TreeExplainer
     n_features = int(model.n_features_in_)
     m_q = max(1, n_features // 4)
     return TreeExplainer(

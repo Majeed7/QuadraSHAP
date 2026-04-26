@@ -9,8 +9,8 @@ import shap
 from sklearn.datasets import make_regression
 from sklearn.tree import DecisionTreeRegressor
 
-from pgshapley import TreeExplainer as PGTreeExplainer
-from pgshapley._cpp_ext import HAS_CPP_EXT
+from quadrashap import TreeExplainer as PGTreeExplainer
+from quadrashap._cpp_ext import HAS_CPP_EXT
 
 N_FEATURES = 20
 N_TEST_SAMPLES = 10
@@ -48,8 +48,8 @@ def main():
         t_shap = time_fn(expl_shap.shap_values, X_test, N_REPEATS)
 
         # Determine D
-        from pgshapley.treeshap.sklearn import sklearn_to_unified
-        from pgshapley.treeshap.product_games import _dfs_build_leaf_rules
+        from quadrashap.treeshap.sklearn import sklearn_to_unified
+        from quadrashap.treeshap.product_games import _dfs_build_leaf_rules
         unified = sklearn_to_unified(model)
         tree0 = unified.trees[0]
         rules = _dfs_build_leaf_rules(tree0)
@@ -71,14 +71,14 @@ def main():
 
         for mq in range(1, D + 1):
             # Python path
-            with patch("pgshapley.treeshap.product_games.HAS_CPP_EXT", False):
+            with patch("quadrashap.treeshap.product_games.HAS_CPP_EXT", False):
                 expl_py = PGTreeExplainer(model, m_q=mq)
                 fn_py = lambda X: expl_py.shap_values(X, check_additivity=False)
                 t_py = time_fn(fn_py, X_test, N_REPEATS)
 
             # C++ path
             if HAS_CPP_EXT:
-                with patch("pgshapley.treeshap.product_games.HAS_CPP_EXT", True):
+                with patch("quadrashap.treeshap.product_games.HAS_CPP_EXT", True):
                     expl_cpp = PGTreeExplainer(model, m_q=mq)
                     fn_cpp = lambda X: expl_cpp.shap_values(X, check_additivity=False)
                     t_cpp = time_fn(fn_cpp, X_test, N_REPEATS)

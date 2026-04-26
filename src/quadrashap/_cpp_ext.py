@@ -1,5 +1,5 @@
 try:
-    from pgshapley._core import (
+    from quadrashap._core import (
         PreparedTreeData,
         PreparedTreeQT,
         explain_trees,
