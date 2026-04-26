@@ -192,13 +192,41 @@ struct QuadratureTreeWorker {
                           // use they match).
 
     // Scratch state, sized for the current tree.
-    std::vector<double> H;          // (n_nodes * m_q * n_outputs)
+    // H_stack holds one (m_q * n_outputs) buffer per recursion depth, so total
+    // memory is O(max_depth * m_q * n_outputs) instead of O(n_nodes * ...).
+    // Each dfs frame at depth `d` writes its result H[u] into slot `d`; the
+    // child at depth `d+1` writes there in turn, and we consume that slot
+    // (phi update + accumulation into the parent slot) before reusing it for
+    // the next child.
+    std::vector<double> H_stack;    // ((max_depth+1) * m_q * n_outputs)
+    int max_depth;
     std::vector<double> current_q;  // (n_features,)
     std::vector<double> current_F;  // (n_features * m_q)
     std::vector<double> G_cur;      // (m_q,)
 
+    // Iterative pass to find the deepest node, used to size H_stack.
+    int compute_max_depth() {
+        if (n_nodes == 0) return 0;
+        std::vector<std::pair<int,int>> stack;
+        stack.reserve(64);
+        stack.emplace_back(0, 0);
+        int md = 0;
+        while (!stack.empty()) {
+            auto [u, d] = stack.back();
+            stack.pop_back();
+            if (d > md) md = d;
+            const int l = cl[u];
+            if (l == -1) continue;
+            stack.emplace_back(l, d + 1);
+            stack.emplace_back(cr[u], d + 1);
+        }
+        return md;
+    }
+
     void resize_for_tree() {
-        H.assign(static_cast<size_t>(n_nodes) * m_q * n_outputs, 0.0);
+        max_depth = compute_max_depth();
+        H_stack.assign(
+            static_cast<size_t>(max_depth + 1) * m_q * n_outputs, 0.0);
         current_q.assign(n_features, 1.0);
         current_F.assign(static_cast<size_t>(n_features) * m_q, 0.0);
         G_cur.assign(m_q, 1.0);
@@ -212,11 +240,13 @@ struct QuadratureTreeWorker {
 
     // Single DFS: descend the tree computing H bottom-up.  F is kept on the
     // stack; after returning from each child we multiply Delta_F by H and
-    // accumulate into phi.
-    void dfs(int u) {
+    // accumulate into phi. Each frame writes its H[u] into H_stack[depth];
+    // the child's H[child] lives at H_stack[depth+1] just long enough to be
+    // consumed by the parent before the next child overwrites it.
+    void dfs(int u, int depth) {
         const int l = cl[u];
-
-        double* H_u = H.data() + (static_cast<size_t>(u) * m_q) * n_outputs;
+        const size_t hu_len = static_cast<size_t>(m_q) * n_outputs;
+        double* H_u = H_stack.data() + static_cast<size_t>(depth) * hu_len;
 
         if (l == -1) {
             // Leaf: H[u, r, k] = G_cur[r] * V_u[k].
@@ -254,6 +284,8 @@ struct QuadratureTreeWorker {
         const double sats[2] = {sat_left, 1.0 - sat_left};
 
         double* phi_f = out_s + static_cast<ssize_t>(f) * out_stride_f;
+        double* H_child = H_stack.data()
+            + static_cast<size_t>(depth + 1) * hu_len;
 
         for (int c = 0; c < 2; c++) {
             const int child = children[c];
@@ -272,33 +304,35 @@ struct QuadratureTreeWorker {
                 G_cur[ri] = G_saved[ri] * w_e * (a_new / a_old[ri]);
             }
 
-            dfs(child);
+            dfs(child, depth + 1);
 
             // Accumulate: phi[f] += sum_r tree_weight * qw[r] * dF[r] * H[child, r, :]
-            const double* H_c = H.data() + (static_cast<size_t>(child) * m_q) * n_outputs;
             if (n_outputs == 1) {
                 double acc = 0.0;
                 for (int ri = 0; ri < m_q; ri++) {
-                    acc += qw[ri] * dF[ri] * H_c[ri];
+                    acc += qw[ri] * dF[ri] * H_child[ri];
                 }
                 phi_f[0] += tree_weight * acc;
             } else {
                 for (int ri = 0; ri < m_q; ri++) {
                     const double w = tree_weight * qw[ri] * dF[ri];
-                    const double* H_row = H_c + ri * n_outputs;
+                    const double* H_row = H_child + ri * n_outputs;
                     for (int k = 0; k < n_outputs; k++) {
                         phi_f[k] += w * H_row[k];
                     }
                 }
             }
-        }
 
-        // H[u] = H[l] + H[r]
-        const double* H_l = H.data() + (static_cast<size_t>(l) * m_q) * n_outputs;
-        const double* H_r = H.data() + (static_cast<size_t>(r) * m_q) * n_outputs;
-        const size_t hu_len = static_cast<size_t>(m_q) * n_outputs;
-        for (size_t i = 0; i < hu_len; i++) {
-            H_u[i] = H_l[i] + H_r[i];
+            // Fold H[child] into H[u]: first child seeds, second child sums.
+            // H[child] then becomes free for the next child or for the
+            // sibling-of-our-parent that will reuse depth+1.
+            if (c == 0) {
+                std::memcpy(H_u, H_child, hu_len * sizeof(double));
+            } else {
+                for (size_t i = 0; i < hu_len; i++) {
+                    H_u[i] += H_child[i];
+                }
+            }
         }
 
         // Restore parent state.
@@ -362,7 +396,7 @@ void explain_trees_quadrature(
             w.out_stride_f = out_stride_f;
 
             w.reset_for_sample();
-            w.dfs(0);
+            w.dfs(0, 0);
         }
     }
 }
