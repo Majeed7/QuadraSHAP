@@ -21,6 +21,27 @@ def _gauss_legendre_01_numpy(m_q: int, dtype=np.float64):
     return x.astype(dtype, copy=False), w.astype(dtype, copy=False)
 
 
+def _jax_work_dtype(K: np.ndarray):
+    """Choose a JAX compute dtype that matches backend capabilities."""
+    dtype = np.result_type(K.dtype, np.float32)
+
+    if not JAX_AVAILABLE:
+        return np.dtype(dtype)
+
+    try:
+        platforms = {dev.platform for dev in jax.devices()}
+    except Exception:
+        platforms = set()
+
+    if (jax.default_backend() != "cpu") or (platforms & {"gpu", "tpu", "metal"}):
+        return np.dtype(np.float32)
+
+    if not getattr(jax.config, "jax_enable_x64", False) and np.dtype(dtype) == np.dtype(np.float64):
+        return np.dtype(np.float32)
+
+    return np.dtype(dtype)
+
+
 class ProductGamesShapleyNumpy:
     """
     Alpha-free product-game Shapley factors in NumPy.
@@ -90,110 +111,103 @@ class ProductGamesShapleyNumpy:
         return K * Qint
 
 
-class ProductGamesShapleyJax:
-    """
-    Product-game Shapley factors in JAX.
+if JAX_AVAILABLE:
+    class ProductGamesShapleyJax:
+        """
+        Product-game Shapley factors in JAX.
 
-    Returns Phi (m,d) in NumPy format.
-    """
+        Returns Phi (m,d) in NumPy format.
+        """
 
-    def __init__(self):
-        if not JAX_AVAILABLE:
+        def __init__(self):
+            if not JAX_AVAILABLE:
+                raise RuntimeError("JAX is not available on this system.")
+
+        @staticmethod
+        @jax.jit
+        def _phi_prefix_core(K, x, w):
+            # K: (m, d)
+            B = 1.0 + x[:, None, None] * K[None, :, :]  # (m_q, m, d)
+            pref = lax.cumprod(B, axis=2)
+            pref = jnp.concatenate(
+                [jnp.ones((B.shape[0], B.shape[1], 1), dtype=B.dtype), pref[:, :, :-1]], axis=2
+            )
+            suf = lax.cumprod(B[:, :, ::-1], axis=2)[:, :, ::-1]
+            suf = jnp.concatenate(
+                [suf[:, :, 1:], jnp.ones((B.shape[0], B.shape[1], 1), dtype=B.dtype)], axis=2
+            )
+            Q = pref * suf
+            acc = (w[:, None, None] * Q).sum(axis=0)  # (m, d)
+            return K * acc
+
+        def phi_matrix_prefix_scan(self, K: np.ndarray, m_q: int) -> np.ndarray:
+            K = np.asarray(K)
+
+            x_np, w_np = np.polynomial.legendre.leggauss(m_q)
+            x_np = 0.5 * (x_np + 1.0)
+            w_np = 0.5 * w_np
+
+            dtype = _jax_work_dtype(K)
+            if K.dtype != dtype:
+                K = K.astype(dtype, copy=False)
+            x = jnp.asarray(x_np, dtype=dtype)
+            w = jnp.asarray(w_np, dtype=dtype)
+            Kj = jnp.asarray(K, dtype=dtype)
+
+            out = self._phi_prefix_core(Kj, x, w)
+            return np.asarray(out)
+
+        @staticmethod
+        @jax.jit
+        def _phi_logspace_core(K, x, w, eps):
+            # K: (m, d)
+            x = x[:, None]  # (m_q, 1)
+            w = w[:, None]  # (m_q, 1)
+            m, d = K.shape
+
+            def scan_step(carry, k_j):
+                # k_j: (m,) — column j of K
+                log_abs_P, sign_P = carry
+                t = 1.0 + x * k_j[None, :]
+                sign_P = sign_P * jnp.sign(t)
+                log_abs_P = log_abs_P + jnp.log(jnp.maximum(jnp.abs(t), eps))
+                return (log_abs_P, sign_P), None
+
+            # Scan over d columns of K
+            init = (
+                jnp.zeros((x.shape[0], m), K.dtype),
+                jnp.ones((x.shape[0], m), K.dtype),
+            )
+            (log_abs_P, sign_P), _ = lax.scan(scan_step, init, K.T)  # scan over (d, m)
+
+            def per_feature(k_i):
+                # k_i: (m,) — column i of K
+                denom = 1.0 + x * k_i[None, :]
+                integrand_sign = sign_P * jnp.sign(denom)
+                integrand_log = log_abs_P - jnp.log(jnp.maximum(jnp.abs(denom), eps))
+                Qint = jnp.sum(w * (integrand_sign * jnp.exp(integrand_log)), axis=0)  # (m,)
+                return k_i * Qint  # (m,)
+
+            # vmap over d columns, result (d, m), then transpose to (m, d)
+            return jax.vmap(per_feature, in_axes=0)(K.T).T
+
+        def phi_matrix_logspace(self, K: np.ndarray, m_q: int, eps: float = 1e-100) -> np.ndarray:
+            K = np.asarray(K)
+
+            x_np, w_np = np.polynomial.legendre.leggauss(m_q)
+            x_np = 0.5 * (x_np + 1.0)
+            w_np = 0.5 * w_np
+
+            dtype = _jax_work_dtype(K)
+            if K.dtype != dtype:
+                K = K.astype(dtype, copy=False)
+            x = jnp.asarray(x_np, dtype=dtype)
+            w = jnp.asarray(w_np, dtype=dtype)
+            Kj = jnp.asarray(K, dtype=dtype)
+
+            out = self._phi_logspace_core(Kj, x, w, eps)
+            return np.asarray(out)
+else:
+    class ProductGamesShapleyJax:
+        def __init__(self):
             raise RuntimeError("JAX is not available on this system.")
-
-    @staticmethod
-    @jax.jit
-    def _phi_prefix_core(K, x, w):
-        # K: (m, d)
-        B = 1.0 + x[:, None, None] * K[None, :, :]  # (m_q, m, d)
-        pref = lax.cumprod(B, axis=2)
-        pref = jnp.concatenate(
-            [jnp.ones((B.shape[0], B.shape[1], 1), dtype=B.dtype), pref[:, :, :-1]], axis=2
-        )
-        suf = lax.cumprod(B[:, :, ::-1], axis=2)[:, :, ::-1]
-        suf = jnp.concatenate(
-            [suf[:, :, 1:], jnp.ones((B.shape[0], B.shape[1], 1), dtype=B.dtype)], axis=2
-        )
-        Q = pref * suf
-        acc = (w[:, None, None] * Q).sum(axis=0)  # (m, d)
-        return K * acc
-
-    def phi_matrix_prefix_scan(self, K: np.ndarray, m_q: int) -> np.ndarray:
-        K = np.asarray(K)
-
-        x_np, w_np = np.polynomial.legendre.leggauss(m_q)
-        x_np = 0.5 * (x_np + 1.0)
-        w_np = 0.5 * w_np
-
-        # dtype policy: prefer float32 on accelerators
-        dtype = np.result_type(K.dtype, np.float32)
-        try:
-            platforms = {dev.platform for dev in jax.devices()}
-        except Exception:
-            platforms = set()
-        if (jax.default_backend() != "cpu") or (platforms & {"gpu", "tpu", "metal"}):
-            dtype = np.float32
-            K = K.astype(np.float32, copy=False)
-        x = jnp.asarray(x_np, dtype=dtype)
-        w = jnp.asarray(w_np, dtype=dtype)
-        Kj = jnp.asarray(K, dtype=dtype)
-
-        out = self._phi_prefix_core(Kj, x, w)
-        return np.asarray(out)
-
-    @staticmethod
-    @jax.jit
-    def _phi_logspace_core(K, x, w, eps):
-        # K: (m, d)
-        x = x[:, None]  # (m_q, 1)
-        w = w[:, None]  # (m_q, 1)
-        m, d = K.shape
-
-        def scan_step(carry, k_j):
-            # k_j: (m,) — column j of K
-            log_abs_P, sign_P = carry
-            t = 1.0 + x * k_j[None, :]
-            sign_P = sign_P * jnp.sign(t)
-            log_abs_P = log_abs_P + jnp.log(jnp.maximum(jnp.abs(t), eps))
-            return (log_abs_P, sign_P), None
-
-        # Scan over d columns of K
-        init = (
-            jnp.zeros((x.shape[0], m), K.dtype),
-            jnp.ones((x.shape[0], m), K.dtype),
-        )
-        (log_abs_P, sign_P), _ = lax.scan(scan_step, init, K.T)  # scan over (d, m)
-
-        def per_feature(k_i):
-            # k_i: (m,) — column i of K
-            denom = 1.0 + x * k_i[None, :]
-            integrand_sign = sign_P * jnp.sign(denom)
-            integrand_log = log_abs_P - jnp.log(jnp.maximum(jnp.abs(denom), eps))
-            Qint = jnp.sum(w * (integrand_sign * jnp.exp(integrand_log)), axis=0)  # (m,)
-            return k_i * Qint  # (m,)
-
-        # vmap over d columns, result (d, m), then transpose to (m, d)
-        return jax.vmap(per_feature, in_axes=0)(K.T).T
-
-    def phi_matrix_logspace(self, K: np.ndarray, m_q: int, eps: float = 1e-100) -> np.ndarray:
-        K = np.asarray(K)
-
-        x_np, w_np = np.polynomial.legendre.leggauss(m_q)
-        x_np = 0.5 * (x_np + 1.0)
-        w_np = 0.5 * w_np
-
-        # dtype policy: prefer float32 on accelerators
-        dtype = np.result_type(K.dtype, np.float32)
-        try:
-            platforms = {dev.platform for dev in jax.devices()}
-        except Exception:
-            platforms = set()
-        if (jax.default_backend() != "cpu") or (platforms & {"gpu", "tpu", "metal"}):
-            dtype = np.float32
-            K = K.astype(np.float32, copy=False)
-        x = jnp.asarray(x_np, dtype=dtype)
-        w = jnp.asarray(w_np, dtype=dtype)
-        Kj = jnp.asarray(K, dtype=dtype)
-
-        out = self._phi_logspace_core(Kj, x, w, eps)
-        return np.asarray(out)

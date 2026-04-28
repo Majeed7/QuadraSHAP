@@ -1,0 +1,11 @@
+dataset,model_kind,explainer,n_samples,avg_seconds_per_instance,std_seconds_per_instance
+rotten_tomatoes,decision_tree,pg_tree_numpy_prefix_scan,5,7.437518797814846e-05,9.388809146960017e-05
+rotten_tomatoes,decision_tree,pg_tree_numpy_logspace,5,1.851702108979225e-05,2.4364212967192994e-06
+rotten_tomatoes,random_forest,pg_tree_numpy_prefix_scan,5,0.002743541612289846,6.805689335870556e-05
+rotten_tomatoes,random_forest,pg_tree_numpy_logspace,5,0.0027159997960552575,0.0001151229456950922
+rotten_tomatoes,extra_trees,pg_tree_numpy_prefix_scan,5,0.00732419197447598,7.688554603985272e-05
+rotten_tomatoes,extra_trees,pg_tree_numpy_logspace,5,0.007239783206023276,4.929847370727548e-05
+rotten_tomatoes,svc_rbf,rbf_local_logspace_numpy,5,0.03381973342038691,0.0004055354134767122
+rotten_tomatoes,svc_rbf,rbf_local_prefix_scan_numpy,5,0.027850449993275107,0.0038163060279641043
+rotten_tomatoes,krr_rbf,rbf_local_logspace_numpy,5,0.033643466606736186,0.0004867011366031694
+rotten_tomatoes,krr_rbf,rbf_local_prefix_scan_numpy,5,0.025690041622146963,0.0002385954812781642

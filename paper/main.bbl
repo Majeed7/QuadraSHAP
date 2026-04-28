@@ -1,0 +1,176 @@
+\begin{thebibliography}{27}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Bifet et~al.(2022{\natexlab{a}})Bifet, Read, Xu,
+  et~al.]{linear_treeshap}
+Albert Bifet, Jesse Read, Chao Xu, et~al.
+\newblock Linear treeshap.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  2022{\natexlab{a}}.
+
+\bibitem[Bifet et~al.(2022{\natexlab{b}})Bifet, Read, Xu,
+  et~al.]{linear_treeshap_repo}
+Albert Bifet, Jesse Read, Chao Xu, et~al.
+\newblock Linear treeshap: reference implementation.
+\newblock \url{https://github.com/yupbank/linear_tree_shap},
+  2022{\natexlab{b}}.
+\newblock Accessed: 2026-04-12, commit: 9deb5568.
+
+\bibitem[Blelloch(1990)]{blelloch1990prefix}
+Guy~E. Blelloch.
+\newblock Prefix sums and their applications.
+\newblock Technical report, Carnegie Mellon University, 1990.
+
+\bibitem[Chau et~al.(2022)Chau, Hu, Gonzalez, and Sejdinovic]{rkhs_shap}
+Siu~Lun Chau, Robert Hu, Javier Gonzalez, and Dino Sejdinovic.
+\newblock Rkhs-shap: Shapley values for kernel methods.
+\newblock \emph{Advances in neural information processing systems},
+  35:\penalty0 13050--13063, 2022.
+
+\bibitem[Chau et~al.(2023)Chau, Muandet, and Sejdinovic]{gpshap}
+Siu~Lun Chau, Krikamol Muandet, and Dino Sejdinovic.
+\newblock Explaining the uncertain: Stochastic shapley values for gaussian
+  process models.
+\newblock \emph{Advances in Neural Information Processing Systems},
+  36:\penalty0 50769--50795, 2023.
+
+\bibitem[Chen et~al.(2020)Chen, Lundberg, Erion, and Lee]{chen2020true}
+Hugh Chen, Scott~M. Lundberg, Gabriel~G. Erion, and Su-In Lee.
+\newblock True to the model or true to the data?
+\newblock \emph{arXiv preprint arXiv:2006.16234}, 2020.
+
+\bibitem[Davis and Rabinowitz(1984)]{davis1984methods}
+Philip~J. Davis and Philip Rabinowitz.
+\newblock \emph{Methods of Numerical Integration}.
+\newblock Academic Press, 2nd edition, 1984.
+
+\bibitem[Dehez(2024)]{cooperative_prodcut_games}
+Pierre Dehez.
+\newblock Cooperative product games.
+\newblock \emph{International Game Theory Review}, 26\penalty0 (01):\penalty0
+  2350016, 2024.
+
+\bibitem[Fumagalli et~al.(2026)Fumagalli, Witter, and Musco]{polyshap}
+Fabian Fumagalli, R~Teal Witter, and Christopher Musco.
+\newblock Polyshap: Extending kernelshap with interaction-informed polynomial
+  regression.
+\newblock \emph{arXiv preprint arXiv:2601.18608}, 2026.
+
+\bibitem[Golub and Welsch(1969)]{golub1969calculation}
+Gene~H. Golub and John~H. Welsch.
+\newblock Calculation of {G}auss quadrature rules.
+\newblock \emph{Mathematics of Computation}, 23\penalty0 (106):\penalty0
+  221--230, 1969.
+
+\bibitem[Heskes et~al.(2020)Heskes, Sijben, Bucur, and Claassen]{causal_shap}
+Tom Heskes, Enzo Sijben, Ioana Bucur, and Tom Claassen.
+\newblock Causal shapley values: Exploiting causal knowledge to explain
+  individual predictions of complex models.
+\newblock \emph{Advances in Neural Information Processing Systems}, 33, 2020.
+
+\bibitem[Janzing et~al.(2020)Janzing, Minorics, and
+  Bl{\"o}baum]{interventional_shap}
+Dominik Janzing, Lenon Minorics, and Patrick Bl{\"o}baum.
+\newblock Feature relevance quantification in explainable ai: A causal problem.
+\newblock \emph{Proceedings of the 23rd International Conference on Artificial
+  Intelligence and Statistics}, 2020.
+
+\bibitem[Jiang et~al.(2025)Jiang, Zhang, and Zhang]{q-shap}
+Zhongli Jiang, Min Zhang, and Dabao Zhang.
+\newblock Fast calculation of feature contributions in boosting trees.
+\newblock In \emph{The 41st Conference on Uncertainty in Artificial
+  Intelligence}, 2025.
+
+\bibitem[Lundberg and Lee(2017)]{shap}
+Scott~M. Lundberg and Su-In Lee.
+\newblock A unified approach to interpreting model predictions.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2017.
+
+\bibitem[Lundberg et~al.(2020)Lundberg, Erion, Chen, DeGrave, Prutkin, Nair,
+  Katz, Himmelfarb, Bansal, and Lee]{treeshap}
+Scott~M. Lundberg, Gabriel Erion, Hugh Chen, Alex DeGrave, Jordan~M. Prutkin,
+  Bala Nair, Ronit Katz, Jonathan Himmelfarb, Nisha Bansal, and Su-In Lee.
+\newblock From local explanations to global understanding with explainable ai
+  for trees.
+\newblock \emph{Nature Machine Intelligence}, 2020.
+
+\bibitem[Merrick and Taly(2020)]{fourier_treeshap}
+Luke Merrick and Ankur Taly.
+\newblock The explanation game: Explaining machine learning models using
+  shapley values.
+\newblock \emph{arXiv preprint arXiv:2009.05500}, 2020.
+
+\bibitem[Mohammadi et~al.(2024)Mohammadi, Chau, and
+  Muandet]{product_kernel_shapley}
+Majid Mohammadi, Siu~Lun Chau, and Krikamol Muandet.
+\newblock Linear-time exact shapley values for product kernel methods.
+\newblock \emph{arXiv preprint}, 2024.
+
+\bibitem[Mohammadi et~al.(2025)Mohammadi, Chau, and Muandet]{pkex_shapley}
+Majid Mohammadi, Siu~Lun Chau, and Krikamol Muandet.
+\newblock Computing exact shapley values in polynomial time for product-kernel
+  methods.
+\newblock \emph{arXiv preprint arXiv:2505.16516}, 2025.
+
+\bibitem[Mohammadi et~al.(2026)Mohammadi, Muandet, Tiddi, Ten~Teije, and
+  Chau]{fgpx_shapley}
+Majid Mohammadi, Krikamol Muandet, Ilaria Tiddi, Annette Ten~Teije, and Siu~Lun
+  Chau.
+\newblock Exact shapley attributions in quadratic-time for fanova gaussian
+  processes.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial
+  Intelligence}, volume~40, pages 24414--24421, 2026.
+
+\bibitem[Molnar(2022)]{shap_book}
+Christoph Molnar.
+\newblock \emph{Interpretable Machine Learning}.
+\newblock Lulu.com, 2022.
+\newblock URL \url{https://christophm.github.io/interpretable-ml-book/}.
+
+\bibitem[Muschalik et~al.(2024)Muschalik, Baniecki, Fumagalli, Kolpaczki,
+  Hammer, and H{\"u}llermeier]{shapiq}
+Maximilian Muschalik, Hubert Baniecki, Fabian Fumagalli, Patrick Kolpaczki,
+  Barbara Hammer, and Eyke H{\"u}llermeier.
+\newblock shapiq: Shapley interactions for machine learning.
+\newblock \emph{Advances in Neural Information Processing Systems},
+  37:\penalty0 130324--130357, 2024.
+
+\bibitem[Ribeiro et~al.(2016)Ribeiro, Singh, and Guestrin]{lime}
+Marco~Tulio Ribeiro, Sameer Singh, and Carlos Guestrin.
+\newblock Why should i trust you?: Explaining the predictions of any
+  classifier.
+\newblock In \emph{KDD}, 2016.
+
+\bibitem[Shapley(1953)]{shapley}
+Lloyd~S. Shapley.
+\newblock A value for n-person games.
+\newblock In \emph{Contributions to the Theory of Games}. Princeton University
+  Press, 1953.
+
+\bibitem[Sundararajan and Najmi(2020)]{many_sv}
+Mukund Sundararajan and Amir Najmi.
+\newblock The many shapley values for model explanation.
+\newblock \emph{Proceedings of the 37th International Conference on Machine
+  Learning}, 2020.
+
+\bibitem[Trefethen(2008)]{trefethen2008gauss}
+Lloyd~N. Trefethen.
+\newblock Is {G}auss quadrature better than {C}lenshaw--{C}urtis?
+\newblock \emph{SIAM Review}, 50\penalty0 (1):\penalty0 67--87, 2008.
+
+\bibitem[Weber(1988)]{weber1988probabilistic}
+Robert~J. Weber.
+\newblock Probabilistic values for games.
+\newblock \emph{The Shapley Value: Essays in honor of Lloyd S. Shapley}, pages
+  101--119, 1988.
+
+\bibitem[Yang(2021)]{fast_tree_shap}
+Jilei Yang.
+\newblock Fast treeshap: Accelerating shap value computation for trees.
+\newblock \emph{arXiv preprint arXiv:2109.09847}, 2021.
+
+\end{thebibliography}

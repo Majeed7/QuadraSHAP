@@ -1,0 +1,13 @@
+key,hub_id,task,text_columns,positive_label,notes,binary_kernel_ready,train_size,validation_size,test_size,unsupervised_size,total_examples,label_names,n_classes,error
+emotion,dair-ai/emotion,emotion,text,,Six-way emotion classification.,False,16000.0,2000.0,2000.0,,20000.0,"sadness, joy, love, anger, fear, surprise",6.0,
+banking77,PolyAI/banking77,intent,text,,Seventy-seven way banking intent classification.,False,,,,,,,,"CalledProcessError: Command '['curl', '-fsSL', 'https://datasets-server.huggingface.co/splits?dataset=PolyAI%2Fbanking77']' returned non-zero exit status 56."
+trec,CogComp/trec,question_type,text,,Six-way question classification.,False,,,,,,,,"CalledProcessError: Command '['curl', '-fsSL', 'https://datasets-server.huggingface.co/splits?dataset=CogComp%2Ftrec']' returned non-zero exit status 56."
+amazon_polarity,fancyzhx/amazon_polarity,sentiment,"title, content",1.0,Binary sentiment using title + content.,True,3600000.0,,400000.0,,4000000.0,"negative, positive",2.0,
+yelp_polarity,fancyzhx/yelp_polarity,sentiment,text,1.0,Binary sentiment with long reviews.,True,560000.0,,38000.0,,598000.0,"1, 2",2.0,
+imdb,stanfordnlp/imdb,sentiment,text,1.0,Binary sentiment; includes unlabeled split ignored here.,True,25000.0,,25000.0,50000.0,100000.0,"neg, pos",2.0,
+sst2,nyu-mll/glue,sentiment,sentence,1.0,GLUE SST-2; validation is used as test because the public test labels are hidden.,True,67349.0,872.0,1821.0,,70042.0,"negative, positive",2.0,
+tweet_eval_sentiment,cardiffnlp/tweet_eval,sentiment,text,2.0,Three-way sentiment; kernel explainer pipeline is limited to binary datasets.,False,45615.0,2000.0,12284.0,,59899.0,"negative, neutral, positive",3.0,
+rotten_tomatoes,cornell-movie-review-data/rotten_tomatoes,sentiment,text,1.0,Binary sentiment.,True,8530.0,1066.0,1066.0,,10662.0,"neg, pos",2.0,
+sms_spam,ucirvine/sms_spam,spam,sms,,Binary spam detection rather than sentiment.,True,5574.0,,,,5574.0,"ham, spam",2.0,
+dbpedia_14,fancyzhx/dbpedia_14,topic,"title, content",,Fourteen-way topic classification.,False,560000.0,,70000.0,,630000.0,"Company, EducationalInstitution, Artist, Athlete, OfficeHolder, MeanOfTransportation, Building, NaturalPlace, Village, Animal, Plant, Album, Film, WrittenWork",14.0,
+ag_news,fancyzhx/ag_news,topic,text,,Four-way topic classification.,False,120000.0,,7600.0,,127600.0,"World, Sports, Business, Sci/Tech",4.0,

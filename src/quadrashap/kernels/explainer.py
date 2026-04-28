@@ -2,21 +2,20 @@ import math
 import time
 import numpy as np
 
-"""Explainer backends for product-form kernels.
+"""
+Explainer backends for product-form kernels.
 
 Provides ProductKernelLocalExplainer and RBFLocalExplainer that compute
 per-feature Shapley values using multiple numerical backends (NumPy/JAX).
 """
 
-from product_games_shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax
+from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax
 
 try:
     import jax
     import jax.numpy as jnp
     from jax import lax
     JAX_AVAILABLE = True
-    print("Backend forced to:", jax.default_backend())
-    print("Devices:", jax.devices())
 except Exception:
     JAX_AVAILABLE = False
 
@@ -133,18 +132,19 @@ class ProductKernelLocalExplainer:
 
         Returns an (n,) NumPy array.
         """
-        if hasattr(self.model, "dual_coef_"):
+        if hasattr(self.model, "dual_coef_") and hasattr(self.model, "intercept_"):
             self.null_game = float(np.asarray(self.model.intercept_).ravel()[0])
             return np.asarray(self.model.dual_coef_, dtype=np.float64).ravel()
+
+        if hasattr(self.model, "dual_coef_"):
+            alpha = np.asarray(self.model.dual_coef_, dtype=np.float64).ravel()
+            self.null_game = float(np.sum(alpha))
+            return alpha
 
         if hasattr(self.model, "alpha_"):
             alpha = np.asarray(self.model.alpha_, dtype=np.float64).ravel()
             self.null_game = float(np.sum(alpha))
             return alpha
-
-        if hasattr(self.model, "dual_coef_") and hasattr(self.model, "intercept_"):
-            self.null_game = float(np.asarray(self.model.intercept_).ravel()[0])
-            return np.asarray(self.model.dual_coef_, dtype=np.float64).ravel()
 
         raise ValueError("Unsupported model type for Shapley value computation (alpha).")
 
@@ -184,26 +184,30 @@ class ProductKernelLocalExplainer:
             m_q = (d + 1) // 2  # exactness for degree (d-1)
 
         ## log space Gauss–Legendre backends
-        elif method == 'logspace_numpy':
+        if method == 'logspace_numpy':
             phi = ProductGamesShapleyNumpy().phi_matrix_logspace(K, m_q)  # (n, d)
             out = (phi * alpha[:, None]).sum(axis=0)  # (d,)
 
             return out
 
-        elif method == 'logspace_jax':
+        if method == 'logspace_jax':
+            if not JAX_AVAILABLE:
+                raise RuntimeError("JAX is not available on this system.")
             phi = ProductGamesShapleyJax().phi_matrix_logspace(K, m_q)  # (n, d)
             out = (phi * alpha[:, None]).sum(axis=0)  # (d,)
 
             return out
 
         ## prefix /suffix Gauss Legendre backends
-        elif method == 'prefix_scan_numpy':
+        if method == 'prefix_scan_numpy':
             phi = ProductGamesShapleyNumpy().phi_matrix_prefix_scan(K, m_q)  # (n, d)
             out = (phi * alpha[:, None]).sum(axis=0)  # (d,)
 
             return out
 
-        elif method == 'prefix_scan_jax':
+        if method == 'prefix_scan_jax':
+            if not JAX_AVAILABLE:
+                raise RuntimeError("JAX is not available on this system.")
             phi = ProductGamesShapleyJax().phi_matrix_prefix_scan(K, m_q)  # (n, d)
             out = (phi * alpha[:, None]).sum(axis=0)  # (d,)
 
@@ -246,7 +250,7 @@ class RBFLocalExplainer(ProductKernelLocalExplainer):
 
         raise ValueError("Cannot infer gamma for the provided model.")
 
-    def explain(self, x, method: str = 'esp-collective', m_q: int | None = None):
+    def explain(self, x, method: str = 'logspace_jax', m_q: int | None = None):
         return super().explain(x=np.asarray(x, dtype=np.float64),
                                gamma=self.gamma,
                                method=method,
@@ -295,4 +299,3 @@ if __name__ == "__main__":
         print(f"  - {name:14s} : time = {dt:.3f}s | sum(phi)={np.sum(vals):.6g}")
 
     print("done.")
-
