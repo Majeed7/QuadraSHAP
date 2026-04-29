@@ -1,6 +1,2 @@
-dataset,model_kind,task,trained_now,fit_time_seconds,validation_score,accuracy,macro_f1,best_params
-rotten_tomatoes,decision_tree,sentiment,False,2.6092516250209883,0.55,0.5309568480300187,0.480573649394035,"{""max_depth"": 10, ""min_samples_leaf"": 2}"
-rotten_tomatoes,random_forest,sentiment,False,1.6140476251021028,0.58,0.574108818011257,0.5680743966871341,"{""max_depth"": 20, ""min_samples_leaf"": 2, ""n_estimators"": 100}"
-rotten_tomatoes,extra_trees,sentiment,False,0.3979442080017179,0.595,0.5853658536585366,0.573746584884836,"{""max_depth"": 20, ""min_samples_leaf"": 1, ""n_estimators"": 100}"
-rotten_tomatoes,svc_rbf,sentiment,False,0.05749666702467948,0.53,0.5656660412757973,0.5530641166696096,"{""C"": 0.5, ""gamma"": 0.1}"
-rotten_tomatoes,krr_rbf,sentiment,False,0.04230991599615663,0.41,0.5365853658536586,0.5357208350966286,"{""alpha"": 0.1, ""gamma"": 0.1}"
+dataset,model_kind,task,trained_now,fit_time_seconds,validation_score,train_accuracy,train_macro_f1,accuracy,macro_f1,best_params,tree_count,total_leaves,max_depth,max_features_on_path
+rotten_tomatoes,random_forest,sentiment,False,2.179808070002764,0.650093808630394,0.7718,0.7713033715495221,0.6585365853658537,0.6580056972021661,"{""max_depth"": 100, ""min_samples_leaf"": 2, ""n_estimators"": 300}",300,83125,100,100

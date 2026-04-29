@@ -13,7 +13,7 @@ namespace py = pybind11;
 // Maximum supported quadrature order for stack-allocated scratch buffers in
 // the quadrature-tree kernel. m_q = ceil(D/2) where D is the longest distinct
 // feature path; in practice m_q never approaches this bound.
-static constexpr int QT_MAX_MQ = 64;
+static constexpr int QT_MAX_MQ = 512;
 
 struct PreparedTreeData {
     py::array_t<int32_t, py::array::c_style> feature_ids; // (n_leaves, D)

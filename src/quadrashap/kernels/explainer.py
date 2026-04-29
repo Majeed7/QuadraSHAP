@@ -9,7 +9,7 @@ Provides ProductKernelLocalExplainer and RBFLocalExplainer that compute
 per-feature Shapley values using multiple numerical backends (NumPy/JAX).
 """
 
-from pgshapley.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax
+from quadrashap.product_games.shapley import ProductGamesShapleyNumpy, ProductGamesShapleyJax
 
 try:
     import jax
