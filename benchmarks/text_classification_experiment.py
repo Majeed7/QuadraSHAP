@@ -856,6 +856,114 @@ def _ev_per_sample(
     return np.full(n_samples, scalar, dtype=np.float64)
 
 
+def _benchmark_method_in_child(
+    method_name: str,
+    estimator,
+    X_batch: np.ndarray,
+    target_class: int,
+    pred_target: np.ndarray | None,
+    n_repeats: int,
+    conn,
+) -> None:
+    """Run one (build + warmup + timed loop + additivity) cycle inside a
+    forked child. Sends a result dict back through ``conn`` then exits.
+
+    The child is meant to be killable from the parent if it overruns the
+    user-set timeout. Building the explainer is included inside the timed
+    region because for some libraries (e.g. SHAP, shapiq) construction on
+    large forests can itself be the dominant cost.
+    """
+    try:
+        handle = _build_tree_explainer(method_name, estimator, target_class)
+        raw_sv = _raw_explain_tree(method_name, handle, X_batch)  # warmup
+        times: list[float] = []
+        for _ in range(max(1, n_repeats)):
+            t0 = time.perf_counter()
+            raw_sv = _raw_explain_tree(method_name, handle, X_batch)
+            times.append(time.perf_counter() - t0)
+            if times[0] > 1.0:
+                break
+
+        n_samples = X_batch.shape[0]
+        additivity_error = None
+        if pred_target is not None:
+            phi = _phi_per_sample(method_name, raw_sv, target_class)
+            ev_vec = _ev_per_sample(
+                method_name, handle, estimator, target_class, n_samples, raw_sv
+            )
+            additivity_error = float(
+                np.max(np.abs(ev_vec + phi.sum(axis=1) - pred_target))
+            )
+
+        conn.send({
+            "status": "ok",
+            "times": [float(t) for t in times],
+            "additivity_error": additivity_error,
+        })
+    except BaseException as exc:
+        conn.send({
+            "status": "failed",
+            "message": f"{type(exc).__name__}: {exc}"[:300],
+        })
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def _run_explainer_with_timeout(
+    method_name: str,
+    estimator,
+    X_batch: np.ndarray,
+    target_class: int,
+    pred_target: np.ndarray | None,
+    n_repeats: int,
+    timeout_s: float | None,
+) -> dict[str, object]:
+    """Wrap ``_benchmark_method_in_child`` in a fork + join(timeout). On
+    timeout the child is terminated and a ``status="timeout"`` dict is
+    returned. ``timeout_s=None`` runs without a timeout.
+    """
+    import multiprocessing as mp
+    ctx = mp.get_context("fork")
+    parent_conn, child_conn = ctx.Pipe(duplex=False)
+    proc = ctx.Process(
+        target=_benchmark_method_in_child,
+        args=(method_name, estimator, X_batch, target_class, pred_target,
+              n_repeats, child_conn),
+    )
+    proc.start()
+    child_conn.close()
+    proc.join(timeout=timeout_s)
+    if proc.is_alive():
+        proc.terminate()
+        proc.join(timeout=5)
+        if proc.is_alive():
+            proc.kill()
+            proc.join()
+        try: parent_conn.close()
+        except Exception: pass
+        return {"status": "timeout", "message": f"exceeded {timeout_s:.0f}s"}
+
+    payload: dict[str, object] | None = None
+    try:
+        if parent_conn.poll():
+            payload = parent_conn.recv()
+    except EOFError:
+        payload = None
+    finally:
+        try: parent_conn.close()
+        except Exception: pass
+
+    if payload is None:
+        return {
+            "status": "failed",
+            "message": f"child exited code={proc.exitcode} without result",
+        }
+    return payload
+
+
 def benchmark_explainers(
     *,
     dataset_key: str,
@@ -863,12 +971,13 @@ def benchmark_explainers(
     X_eval,
     explain_samples: int,
     positive_label: int | None,
+    timeout_s: float | None,
 ) -> list[dict[str, object]]:
     estimator = bundle["estimator"]
     feature_names = bundle["feature_names"]
     X_eval_dense = dense_rows(X_eval)
     n_samples = min(explain_samples, len(X_eval_dense))
-    log(f"  benchmark_explainers: dataset={dataset_key} model={bundle['model_kind']} n_samples={n_samples}")
+    log(f"  benchmark_explainers: dataset={dataset_key} model={bundle['model_kind']} n_samples={n_samples} timeout={timeout_s}")
     rows: list[dict[str, object]] = []
 
     if bundle["model_kind"] in {"decision_tree", "random_forest", "extra_trees"}:
@@ -881,67 +990,72 @@ def benchmark_explainers(
             pred_target = None
 
         for method_name in TREE_EXPLAINER_METHOD_NAMES:
-            log(f"    timing {method_name} on {n_samples} instances")
-            try:
-                handle = _build_tree_explainer(method_name, estimator, target_class)
-                # Untimed warmup (JIT, caches, any first-call work).
-                raw_sv = _raw_explain_tree(method_name, handle, X_batch)
-                times: list[float] = []
-                for _ in range(max(1, TREE_EXPLAINER_REPEATS)):
-                    t0 = time.perf_counter()
-                    raw_sv = _raw_explain_tree(method_name, handle, X_batch)
-                    times.append(time.perf_counter() - t0)
-                    if times[0] > 1.0:
-                        break
-                total_time = float(np.median(times))
+            log(f"    timing {method_name} on {n_samples} instances "
+                f"(timeout={timeout_s}s)")
+            wall_t0 = time.perf_counter()
+            result = _run_explainer_with_timeout(
+                method_name, estimator, X_batch, target_class, pred_target,
+                TREE_EXPLAINER_REPEATS, timeout_s,
+            )
+            wall_s = time.perf_counter() - wall_t0
+            status = str(result.get("status"))
 
-                additivity_error: float | None = None
-                if pred_target is not None:
-                    phi = _phi_per_sample(method_name, raw_sv, target_class)
-                    ev_vec = _ev_per_sample(
-                        method_name, handle, estimator, target_class, n_samples, raw_sv
-                    )
-                    additivity_error = float(
-                        np.max(np.abs(ev_vec + phi.sum(axis=1) - pred_target))
-                    )
-
-                err_str = "n/a" if additivity_error is None else f"{additivity_error:.2e}"
+            if status == "ok":
+                times = list(result.get("times") or [])
+                total_time = float(np.median(times)) if times else float("nan")
+                additivity_error = result.get("additivity_error")
+                err_str = "n/a" if additivity_error is None else f"{float(additivity_error):.2e}"
                 log(
                     f"      {method_name}: total={total_time:.4f}s "
                     f"avg={total_time / max(1, n_samples):.4f}s/inst "
-                    f"err={err_str} (n_repeats={len(times)})"
+                    f"err={err_str} (n_repeats={len(times)}, wall={wall_s:.2f}s)"
                 )
-                rows.append(
-                    {
-                        "dataset": dataset_key,
-                        "model_kind": bundle["model_kind"],
-                        "explainer": method_name,
-                        "n_samples": n_samples,
-                        "avg_seconds_per_instance": total_time / max(1, n_samples),
-                        "total_seconds": total_time,
-                        "n_repeats": len(times),
-                        "additivity_error": additivity_error,
-                        "status": "ok",
-                        "message": None,
-                    }
-                )
-            except BaseException as exc:
-                msg = f"{type(exc).__name__}: {exc}"
+                rows.append({
+                    "dataset": dataset_key,
+                    "model_kind": bundle["model_kind"],
+                    "explainer": method_name,
+                    "n_samples": n_samples,
+                    "avg_seconds_per_instance": total_time / max(1, n_samples),
+                    "total_seconds": total_time,
+                    "n_repeats": len(times),
+                    "additivity_error": (None if additivity_error is None
+                                         else float(additivity_error)),
+                    "status": "ok",
+                    "message": None,
+                    "wall_seconds": wall_s,
+                })
+            elif status == "timeout":
+                log(f"      {method_name}: TIMEOUT after {wall_s:.1f}s "
+                    f"(limit {timeout_s}s)")
+                rows.append({
+                    "dataset": dataset_key,
+                    "model_kind": bundle["model_kind"],
+                    "explainer": method_name,
+                    "n_samples": n_samples,
+                    "avg_seconds_per_instance": None,
+                    "total_seconds": None,
+                    "n_repeats": 0,
+                    "additivity_error": None,
+                    "status": "timeout",
+                    "message": str(result.get("message", "")),
+                    "wall_seconds": wall_s,
+                })
+            else:
+                msg = str(result.get("message", "unknown error"))
                 log(f"      {method_name}: failed: {msg}")
-                rows.append(
-                    {
-                        "dataset": dataset_key,
-                        "model_kind": bundle["model_kind"],
-                        "explainer": method_name,
-                        "n_samples": n_samples,
-                        "avg_seconds_per_instance": None,
-                        "total_seconds": None,
-                        "n_repeats": 0,
-                        "additivity_error": None,
-                        "status": "failed",
-                        "message": msg[:300],
-                    }
-                )
+                rows.append({
+                    "dataset": dataset_key,
+                    "model_kind": bundle["model_kind"],
+                    "explainer": method_name,
+                    "n_samples": n_samples,
+                    "avg_seconds_per_instance": None,
+                    "total_seconds": None,
+                    "n_repeats": 0,
+                    "additivity_error": None,
+                    "status": "failed",
+                    "message": msg[:300],
+                    "wall_seconds": wall_s,
+                })
         return rows
 
     if bundle["model_kind"] in {"svc_rbf", "krr_rbf"}:
@@ -1274,7 +1388,8 @@ def run_text_benchmark(args: argparse.Namespace) -> None:
         f"kernel_train={args.kernel_train_limit} kernel_valid={args.kernel_valid_limit} "
         f"explain_samples={args.explain_samples} perturbation_samples={args.perturbation_samples} "
         f"removal_sizes={args.removal_sizes} families={args.families} "
-        f"max_tree_depth={args.max_tree_depth} force_retrain={args.force_retrain} seed={args.seed}")
+        f"max_tree_depth={args.max_tree_depth} explainer_timeout={args.explainer_timeout} "
+        f"force_retrain={args.force_retrain} seed={args.seed}")
     metrics_rows: list[dict[str, object]] = []
     timing_rows: list[dict[str, object]] = []
     perturb_rows: list[dict[str, object]] = []
@@ -1419,6 +1534,7 @@ def run_text_benchmark(args: argparse.Namespace) -> None:
                     X_eval=X_test_eval,
                     explain_samples=args.explain_samples,
                     positive_label=spec.positive_label,
+                    timeout_s=args.explainer_timeout,
                 )
             )
 
@@ -1497,6 +1613,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "param grid. ``None`` entries in the grid are replaced with this "
         "value; explicit integers are clamped down to it.",
     )
+    run_parser.add_argument(
+        "--explainer-timeout",
+        type=float,
+        default=300.0,
+        help="Wall-clock seconds allowed per (method, dataset) explainer "
+        "run. The build + warmup + timed loop + additivity check all run "
+        "inside one forked child; if it exceeds this budget the child is "
+        "terminated and the row is recorded with status='timeout'. Pass "
+        "0 or a negative number to disable the timeout entirely.",
+    )
     run_parser.add_argument("--force-retrain", action="store_true")
     run_parser.add_argument("--seed", type=int, default=42)
 
@@ -1505,7 +1631,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if argv is None and len(sys.argv) == 1:
         argv = DEBUG_DEFAULT_ARGS
 
-    return parser.parse_args(argv)
+    parsed = parser.parse_args(argv)
+    if hasattr(parsed, "explainer_timeout") and parsed.explainer_timeout is not None:
+        if parsed.explainer_timeout <= 0:
+            parsed.explainer_timeout = None
+    return parsed
 
 
 def main() -> None:

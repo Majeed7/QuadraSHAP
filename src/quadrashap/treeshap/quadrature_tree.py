@@ -86,6 +86,18 @@ class QuadratureTreeShapBackend(TreeShapBackend):
         super().__init__()
         self._m_q_user = m_q
         self._use_cpp = bool(use_cpp)
+        if self._use_cpp and not HAS_CPP_EXT:
+            import warnings
+            warnings.warn(
+                "quadrashap: use_cpp=True requested but the C++ extension "
+                "(_core) failed to load; falling back to the ~50-100x slower "
+                "NumPy/Python DFS path. Reinstall with a C++ toolchain and "
+                "pybind11 available (e.g. `uv pip install pybind11>=2.12 && "
+                "uv pip install --no-build-isolation --reinstall --no-deps "
+                "-e .`) to enable the fast kernel.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
     def _m_q_for_tree(self, D: int) -> int:
         if self._m_q_user is not None:

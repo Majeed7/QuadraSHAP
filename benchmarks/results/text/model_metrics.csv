@@ -1,2 +1,6 @@
 dataset,model_kind,task,trained_now,fit_time_seconds,validation_score,train_accuracy,train_macro_f1,accuracy,macro_f1,best_params,tree_count,total_leaves,max_depth,max_features_on_path
-rotten_tomatoes,random_forest,sentiment,False,2.179808070002764,0.650093808630394,0.7718,0.7713033715495221,0.6585365853658537,0.6580056972021661,"{""max_depth"": 100, ""min_samples_leaf"": 2, ""n_estimators"": 300}",300,83125,100,100
+emotion,random_forest,emotion,False,2.3205390969960717,0.489,0.6032,0.5360465442837706,0.501,0.4133894102918671,"{""max_depth"": 100, ""min_samples_leaf"": 2, ""n_estimators"": 100}",100,24200,100,100
+imdb,random_forest,sentiment,False,4.210958761002985,0.782,0.9632,0.9631603664486401,0.78632,0.7858809964319549,"{""max_depth"": 20, ""min_samples_leaf"": 1, ""n_estimators"": 100}",100,51099,20,20
+sms_spam,random_forest,spam,False,1.00480308799888,0.9802513464991023,0.9970845481049563,0.9936832391872588,0.9659498207885304,0.9228805237315876,"{""max_depth"": 100, ""min_samples_leaf"": 1, ""n_estimators"": 100}",100,29662,100,100
+sst2,random_forest,sentiment,False,1.1287919159949524,0.6467889908256881,0.7526,0.7290877537108517,0.0,0.0,"{""max_depth"": 100, ""min_samples_leaf"": 1, ""n_estimators"": 300}",300,180676,100,100
+rotten_tomatoes,random_forest,sentiment,False,2.179808070002764,0.650093808630394,0.5272,0.5265727278014278,0.5196998123827392,0.5194562327211256,"{""max_depth"": 100, ""min_samples_leaf"": 2, ""n_estimators"": 300}",300,83125,100,100
