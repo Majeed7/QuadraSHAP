@@ -66,10 +66,15 @@ TREE_EXPLAINER_METHOD_NAMES = [
     "fasttreeshap_v1",
     "fasttreeshap_v2",
     "linear_tree_shap",
+    "linear_tree_shap_2out",
     "shapiq",
     "pg_quadrature_tree_cpp",
 ]
-TREE_EXPLAINER_REPEATS = 1
+TREE_EXPLAINER_REPEATS = 3
+# Above this single-run time (seconds) we stop after the first timed repeat
+# so very slow methods (e.g. shapiq on the largest forests) still leave at
+# least one usable measurement before the wall-clock timeout fires.
+TREE_EXPLAINER_REPEAT_BREAK_S = 10.0
 
 
 _SCRIPT_T0 = time.perf_counter()
@@ -751,7 +756,7 @@ def _build_tree_explainer(method_name: str, model, target_class: int = 0):
     if method_name == "fasttreeshap_v2":
         import fasttreeshap
         return fasttreeshap.TreeExplainer(model, algorithm="v2", n_jobs=1)
-    if method_name == "linear_tree_shap":
+    if method_name in {"linear_tree_shap", "linear_tree_shap_2out"}:
         import linear_tree_shap
         from sklearn.ensemble import (
             ExtraTreesClassifier,
@@ -766,6 +771,34 @@ def _build_tree_explainer(method_name: str, model, target_class: int = 0):
         forest_types = (RandomForestRegressor, RandomForestClassifier,
                         ExtraTreesRegressor, ExtraTreesClassifier)
         tree_types = (DecisionTreeRegressor, DecisionTreeClassifier)
+
+        is_2out = method_name == "linear_tree_shap_2out"
+        # 2-output variant only makes sense for classifiers (it explains every
+        # class to mirror the work native multi-output explainers do); for
+        # regressor models we fall back to the 1-output path.
+        if is_2out and not isinstance(model, clf_types + clf_tree_types):
+            is_2out = False
+
+        if is_2out:
+            n_classes = int(getattr(model, "n_classes_", 2))
+
+            def _wrap_per_class(est):
+                return [_LtsClfProxy(est, c) for c in range(n_classes)]
+
+            if isinstance(model, forest_types):
+                explainers_per_tree = [
+                    [linear_tree_shap.TreeExplainer(p) for p in _wrap_per_class(est)]
+                    for est in model.estimators_
+                ]
+                return ("rf_2out", explainers_per_tree)
+            if isinstance(model, tree_types):
+                return (
+                    "tree_2out",
+                    [linear_tree_shap.TreeExplainer(p) for p in _wrap_per_class(model)],
+                )
+            raise NotImplementedError(
+                f"linear_tree_shap doesn't handle {type(model).__name__}"
+            )
 
         def _wrap(est):
             return _LtsClfProxy(est, target_class) if isinstance(est, clf_tree_types) else est
@@ -793,12 +826,27 @@ def _build_tree_explainer(method_name: str, model, target_class: int = 0):
 
 
 def _raw_explain_tree(method_name: str, handle, X: np.ndarray):
-    if method_name == "linear_tree_shap":
+    if method_name in {"linear_tree_shap", "linear_tree_shap_2out"}:
         kind, payload = handle
         if kind == "rf":
             svs = [e.shap_values(X) for e in payload]
             return np.mean(np.stack(svs, axis=0), axis=0)
-        return payload.shap_values(X)
+        if kind == "tree":
+            return payload.shap_values(X)
+        if kind == "rf_2out":
+            # payload is a list of trees; each tree is a list of per-class
+            # TreeExplainers. Compute the average across trees independently
+            # for each class, then stack into (n_samples, n_features, n_classes).
+            n_classes = len(payload[0])
+            per_class = []
+            for c in range(n_classes):
+                svs = [tree_explainers[c].shap_values(X) for tree_explainers in payload]
+                per_class.append(np.mean(np.stack(svs, axis=0), axis=0))
+            return np.stack(per_class, axis=-1)
+        if kind == "tree_2out":
+            per_class = [e.shap_values(X) for e in payload]
+            return np.stack(per_class, axis=-1)
+        raise ValueError(f"Unknown linear_tree_shap handle kind: {kind}")
     if method_name == "shapiq":
         return handle.explain_X(X)
     return handle.shap_values(X, check_additivity=False)
@@ -844,9 +892,9 @@ def _ev_per_sample(
 ) -> np.ndarray:
     if method_name == "shapiq":
         return np.array([float(r.baseline_value) for r in raw_sv], dtype=np.float64)
-    if method_name == "linear_tree_shap":
+    if method_name in {"linear_tree_shap", "linear_tree_shap_2out"}:
         kind, _ = handle
-        if kind == "rf":
+        if kind in {"rf", "rf_2out"}:
             evs = [_lts_ev_single_tree(est, target_class) for est in model.estimators_]
             scalar = float(np.mean(evs))
         else:
@@ -881,7 +929,7 @@ def _benchmark_method_in_child(
             t0 = time.perf_counter()
             raw_sv = _raw_explain_tree(method_name, handle, X_batch)
             times.append(time.perf_counter() - t0)
-            if times[0] > 1.0:
+            if times[0] > TREE_EXPLAINER_REPEAT_BREAK_S:
                 break
 
         n_samples = X_batch.shape[0]
@@ -1003,6 +1051,9 @@ def benchmark_explainers(
             if status == "ok":
                 times = list(result.get("times") or [])
                 total_time = float(np.median(times)) if times else float("nan")
+                total_time_std = (
+                    float(np.std(times, ddof=1)) if len(times) > 1 else None
+                )
                 additivity_error = result.get("additivity_error")
                 err_str = "n/a" if additivity_error is None else f"{float(additivity_error):.2e}"
                 log(
@@ -1016,7 +1067,12 @@ def benchmark_explainers(
                     "explainer": method_name,
                     "n_samples": n_samples,
                     "avg_seconds_per_instance": total_time / max(1, n_samples),
+                    "avg_seconds_per_instance_std": (
+                        None if total_time_std is None
+                        else total_time_std / max(1, n_samples)
+                    ),
                     "total_seconds": total_time,
+                    "total_seconds_std": total_time_std,
                     "n_repeats": len(times),
                     "additivity_error": (None if additivity_error is None
                                          else float(additivity_error)),
@@ -1033,7 +1089,9 @@ def benchmark_explainers(
                     "explainer": method_name,
                     "n_samples": n_samples,
                     "avg_seconds_per_instance": None,
+                    "avg_seconds_per_instance_std": None,
                     "total_seconds": None,
+                    "total_seconds_std": None,
                     "n_repeats": 0,
                     "additivity_error": None,
                     "status": "timeout",
@@ -1049,7 +1107,9 @@ def benchmark_explainers(
                     "explainer": method_name,
                     "n_samples": n_samples,
                     "avg_seconds_per_instance": None,
+                    "avg_seconds_per_instance_std": None,
                     "total_seconds": None,
+                    "total_seconds_std": None,
                     "n_repeats": 0,
                     "additivity_error": None,
                     "status": "failed",
@@ -1243,16 +1303,57 @@ def _fmt_err(err: float | None) -> str:
     return rf"${body}$"
 
 
+# Datasets and explainer methods displayed in the summary table, in display
+# order. Mirrors table5.tex so the rendered output drops in over the manually
+# laid-out reference file.
+SUMMARY_DATASET_ORDER: tuple[tuple[str, str], ...] = (
+    ("emotion", "emotion"),
+    ("imdb", "imdb"),
+    ("sms_spam", r"sms\_spam"),
+    ("sst2", "sst2"),
+    ("rotten_tomatoes", "RT"),
+)
+# (csv explainer key, latex label). For binary text classification the
+# two-output Linear TreeSHAP is the fair comparison, so it is the variant
+# that gets shown.
+SUMMARY_METHOD_ORDER: tuple[tuple[str, str], ...] = (
+    ("shap",                    r"\textsc{TreeShap}"),
+    ("fasttreeshap_v1",         r"\textsc{FastTreeSHAP v1}"),
+    ("fasttreeshap_v2",         r"\textsc{FastTreeSHAP v2}"),
+    ("linear_tree_shap_2out",   r"\textsc{Linear TreeSHAP}"),
+    ("shapiq",                  r"\textsc{shapiq}"),
+    ("pg_quadrature_tree_cpp",  r"\textbf{\QuadraSHAP}"),
+)
+# Errors at or above this magnitude render the entry red and disqualify
+# its time from being marked as the column's best.
+SUMMARY_BREAKDOWN_THRESHOLD = 1e-2
+
+
+def _fmt_std_ms(seconds: float | None, mean_ms: float) -> str | None:
+    """Format std dev in ms with the same decimal precision used for ``mean_ms``."""
+    if seconds is None or not np.isfinite(seconds):
+        return None
+    std_ms = seconds * 1000.0
+    if mean_ms >= 100:   return f"{std_ms:.0f}"
+    if mean_ms >= 10:    return f"{std_ms:.1f}"
+    if mean_ms >= 1:     return f"{std_ms:.2f}"
+    return f"{std_ms:.3f}"
+
+
 def write_summary_latex(
     metrics_df: pd.DataFrame,
     timing_df: pd.DataFrame,
     out_path: Path,
+    timeout_s: float | None = None,
 ) -> None:
-    """Render a LaTeX summary table mirroring ``table_format.tex``.
+    """Render a LaTeX summary table mirroring ``table5.tex``.
 
     Columns are datasets. Top rows describe the trained ``random_forest``
-    (depth, total leaves, tree count, plus train/test accuracy). Then each
-    explainer method gets a two-row block (timing in ms, additivity error).
+    (depth, total leaves, tree count). Then each explainer method gets a
+    two-row block: the top line shows the runtime (mean over repeats, with
+    sample std as ``$\\pm$ s``); the bottom line shows the additivity
+    residual at ``\\scriptsize`` size, in red when the method has broken
+    down numerically. Timed-out cells render as ``\\timeout{N}``.
     """
     if metrics_df.empty:
         log("  metrics dataframe empty; skipping summary_table.tex")
@@ -1261,89 +1362,134 @@ def write_summary_latex(
     if rf_df.empty:
         log("  no random_forest rows; skipping summary_table.tex")
         return
-    datasets = list(rf_df["dataset"].drop_duplicates())
+
+    available = set(rf_df["dataset"].unique())
+    datasets = [(k, lbl) for k, lbl in SUMMARY_DATASET_ORDER if k in available]
+    if not datasets:
+        log("  no recognized datasets in metrics; skipping summary_table.tex")
+        return
     rf_by_dataset = {row["dataset"]: row for _, row in rf_df.iterrows()}
 
-    methods: list[str] = []
-    if not timing_df.empty:
-        rf_timing = timing_df[timing_df["model_kind"] == "random_forest"]
-        methods = list(rf_timing["explainer"].drop_duplicates())
+    rf_timing = (
+        timing_df[timing_df["model_kind"] == "random_forest"]
+        if not timing_df.empty else timing_df
+    )
 
-    def lookup_timing(ds: str, method: str) -> tuple[float | None, float | None, str]:
-        if timing_df.empty:
-            return None, None, "missing"
-        sub = timing_df[
-            (timing_df["dataset"] == ds)
-            & (timing_df["model_kind"] == "random_forest")
-            & (timing_df["explainer"] == method)
+    def lookup(ds: str, method: str):
+        """Return (avg_s, std_s, err, status) or (None, None, None, "missing")."""
+        if rf_timing.empty:
+            return None, None, None, "missing"
+        sub = rf_timing[
+            (rf_timing["dataset"] == ds) & (rf_timing["explainer"] == method)
         ]
         if sub.empty:
-            return None, None, "missing"
+            return None, None, None, "missing"
         row = sub.iloc[0]
         status = str(row.get("status") or "ok")
         t = row.get("avg_seconds_per_instance")
+        s = row.get("avg_seconds_per_instance_std") if "avg_seconds_per_instance_std" in row else None
         e = row.get("additivity_error")
         t = float(t) if t is not None and pd.notna(t) else None
+        s = float(s) if s is not None and pd.notna(s) else None
         e = float(e) if e is not None and pd.notna(e) else None
-        return t, e, status
+        return t, s, e, status
+
+    # Best stable time per dataset (used for bolding).
+    best_time: dict[str, float] = {}
+    for ds_key, _ in datasets:
+        cands = []
+        for m_key, _label in SUMMARY_METHOD_ORDER:
+            t, _, e, status = lookup(ds_key, m_key)
+            if status == "ok" and t is not None and e is not None and e < SUMMARY_BREAKDOWN_THRESHOLD:
+                cands.append(t)
+        if cands:
+            best_time[ds_key] = min(cands)
 
     n = len(datasets)
     col_spec = "@{\\hspace{5pt}}l" + "c" * n + "@{}"
     lines: list[str] = []
-    lines.append(r"\begin{table}[t]")
+    lines.append(r"\begin{table}[H]")
     lines.append(r"\centering")
-    lines.append(r"\footnotesize\setlength{\tabcolsep}{4pt}")
+    lines.append(r"\footnotesize\setlength{\tabcolsep}{1pt}")
     lines.append(
-        r"\caption{Single-threaded tree-explainer benchmark on TF-IDF + "
-        r"\texttt{RandomForestClassifier} across text-classification datasets. "
-        r"Time is mean ms per explained instance; precision is the worst-case "
-        r"additivity residual $\max_i|\mathbb{E}[f] + \sum_j \phi_{ij} - "
-        r"\mathrm{predict\_proba}(x_i)|$. {\color{red}Red} flags numerical "
-        r"breakdown ($\geq 10^{-2}$).}")
-    lines.append(r"\label{tab:text_treeshap_summary}")
+        r"\caption{Execution time in milliseconds (mean $\pm$ sample std.\ "
+        r"over 3 repeats, top) and worst-case violation of the efficiency "
+        r"axiom (bottom) for tree explainers across text-classification "
+        r"datasets. {\color{red}Red} entries indicate numerical breakdown. "
+        r"\textbf{Bold}: fastest stable.}"
+    )
+    lines.append(r"\label{tab:tfidf_treeshap_bench}")
+    lines.append(r"\vspace{0.4em}")
     lines.append(r"\begin{tabular}{" + col_spec + "}")
     lines.append(r"\toprule")
-    header_cells = [_latex_escape(d) for d in datasets]
+    header_cells = [lbl for _, lbl in datasets]
     lines.append(" & " + " & ".join(header_cells) + r" \\")
     lines.append(r"\midrule")
 
-    def stat_row(label: str, getter):
-        cells = [getter(rf_by_dataset[d]) for d in datasets]
+    def stat_row(label: str, getter) -> str:
+        cells = [getter(rf_by_dataset[k]) for k, _ in datasets]
         return label + " & " + " & ".join(cells) + r" \\"
 
-    def fmt_int(x):
+    def fmt_int(x) -> str:
         if x is None or (isinstance(x, float) and not np.isfinite(x)):
             return "—"
         try: return f"{int(x)}"
         except Exception: return "—"
 
-    def fmt_pct(x):
+    def fmt_pct(x) -> str:
         if x is None or (isinstance(x, float) and not np.isfinite(x)):
             return "—"
         return f"{100*float(x):.1f}\\%"
 
-    lines.append(stat_row(r"max depth",  lambda r: fmt_int(r.get("max_depth"))))
+    lines.append(stat_row(r"max depth",   lambda r: fmt_int(r.get("max_depth"))))
     lines.append(stat_row(r"total leaves", lambda r: fmt_int(r.get("total_leaves"))))
-    lines.append(stat_row(r"tree count", lambda r: fmt_int(r.get("tree_count"))))
-    lines.append(stat_row(r"train acc.", lambda r: fmt_pct(r.get("train_accuracy"))))
-    lines.append(stat_row(r"test acc.",  lambda r: fmt_pct(r.get("accuracy"))))
+    lines.append(stat_row(r"tree count",  lambda r: fmt_int(r.get("tree_count"))))
+    # Accuracies are kept as commented-out rows so they round-trip the
+    # table5.tex layout but stay hidden in the rendered PDF by default.
+    lines.append("% " + stat_row(r"train acc.", lambda r: fmt_pct(r.get("train_accuracy"))))
+    lines.append("% " + stat_row(r"test acc.",  lambda r: fmt_pct(r.get("accuracy"))))
+    lines.append(r"\midrule")
 
-    if methods:
-        lines.append(r"\midrule")
-        for mi, method in enumerate(methods):
-            method_label = r"\textsc{" + _latex_escape(method) + "}"
-            time_cells, err_cells = [], []
-            for d in datasets:
-                t, e, status = lookup_timing(d, method)
-                if status != "ok":
-                    time_cells.append("—")
-                    err_cells.append("—")
+    timeout_n = int(timeout_s) if timeout_s is not None else None
+
+    for mi, (m_key, m_label) in enumerate(SUMMARY_METHOD_ORDER):
+        time_cells: list[str] = []
+        err_cells: list[str] = []
+        for ds_key, _ in datasets:
+            t, s, e, status = lookup(ds_key, m_key)
+            if status == "timeout":
+                if timeout_n is not None:
+                    time_cells.append(rf"\timeout{{{timeout_n}}}")
                 else:
-                    time_cells.append(_fmt_time_ms(t))
-                    err_cells.append(r"{\scriptsize " + _fmt_err(e) + "}")
-            lines.append(method_label + " & " + " & ".join(time_cells) + r" \\")
-            tail = r" \\[2pt]" if mi < len(methods) - 1 else r" \\"
-            lines.append(" & " + " & ".join(err_cells) + tail)
+                    time_cells.append(r"\timeout{}")
+                err_cells.append("")
+                continue
+            if status != "ok" or t is None:
+                time_cells.append("—")
+                err_cells.append("—")
+                continue
+
+            mean_str = _fmt_time_ms(t)
+            ms = t * 1000.0
+            is_best = (
+                ds_key in best_time
+                and t == best_time[ds_key]
+                and (e is None or e < SUMMARY_BREAKDOWN_THRESHOLD)
+            )
+            if is_best:
+                mean_str = rf"\textbf{{{mean_str}}}"
+
+            std_str = _fmt_std_ms(s, ms)
+            if std_str is not None:
+                time_cell = rf"{mean_str} {{\scriptsize $\pm$ {std_str}}}"
+            else:
+                time_cell = mean_str
+            time_cells.append(time_cell)
+            err_cells.append(r"{\scriptsize " + _fmt_err(e) + "}")
+
+        lines.append(m_label + " & " + " & ".join(time_cells) + r" \\")
+        tail = r" \\[2pt]" if mi < len(SUMMARY_METHOD_ORDER) - 1 else r" \\"
+        lines.append(" & " + " & ".join(err_cells) + tail)
 
     lines.append(r"\bottomrule")
     lines.append(r"\end{tabular}")
@@ -1564,7 +1710,10 @@ def run_text_benchmark(args: argparse.Namespace) -> None:
     log(f"Writing perturbation_scores.csv -> {RESULTS_DIR}")
     perturb_df.to_csv(RESULTS_DIR / "perturbation_scores.csv", index=False)
     log("Writing summary_table.tex")
-    write_summary_latex(metrics_df, timing_df, RESULTS_DIR / "summary_table.tex")
+    write_summary_latex(
+        metrics_df, timing_df, RESULTS_DIR / "summary_table.tex",
+        timeout_s=args.explainer_timeout,
+    )
     log("Plotting timing results")
     plot_timing_results(timing_df)
     log("Plotting perturbation results")
