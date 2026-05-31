@@ -1,36 +1,40 @@
-# QuadraSHAP
+# QuadraSHAP: Stable and Scalable Shapley Values for Product Games via Gauss-Legendre Quadrature
 
-Anonymous code repository for a NeurIPS submission.
+This repository provides the official implementation accompanying the paper:
 
-This repository implements Shapley-value computation for two related settings:
+> **QuadraSHAP: Stable and Scalable Shapley Values for Product Games via Gauss-Legendre Quadrature**
 
-- `TreeExplainer`: TreeSHAP-style explanations for scikit-learn tree models, with interchangeable backends.
-- Product-kernel explainers: local Shapley values for models whose prediction function factorizes across features, such as RBF kernel methods.
+QuadraSHAP reformulates Shapley-value computation for product games as a Gauss-Legendre quadrature problem, yielding estimates that are both numerically stable and scalable to high-dimensional settings. The library covers two concrete application domains:
 
-The code is organized as a research artifact first: it contains the library code under `src/`, tests under `tests/`, and benchmark scripts plus precomputed outputs under `benchmarks/`.
+- **`TreeExplainer`**: TreeSHAP-style explanations for scikit-learn tree models, with interchangeable numerical backends.
+- **Product-kernel explainers**: local Shapley values for models whose prediction function factorizes across features, such as RBF kernel methods.
+
+The repository is organized as a research artifact: library code lives under `src/`, correctness tests under `tests/`, and benchmark scripts with precomputed outputs under `benchmarks/`.
 
 ## Repository Structure
 
-- `src/quadrashap/`: package source code
-- `src/quadrashap/treeshap/`: tree-model explainers and backends
-- `src/quadrashap/kernels/`: explainers for product-form kernel models
-- `csrc/`: optional C++ extension used by the quadrature-tree backend
-- `tests/`: correctness and regression tests
-- `benchmarks/`: scripts for runtime and approximation experiments
-- `benchmarks/results/`: saved benchmark outputs and figures
-- `model/`: cached benchmark models for text-classification experiments
+| Path | Description |
+|---|---|
+| `src/quadrashap/` | Package source code |
+| `src/quadrashap/treeshap/` | Tree-model explainers and numerical backends |
+| `src/quadrashap/kernels/` | Explainers for product-form kernel models |
+| `csrc/` | Optional C++ extension for the quadrature-tree backend |
+| `tests/` | Correctness and regression tests |
+| `benchmarks/` | Scripts for runtime and approximation experiments |
+| `benchmarks/results/` | Saved benchmark outputs and figures |
+| `model/` | Cached models used by the text-classification benchmarks |
 
 ## Installation
 
-The package targets Python `>=3.11`.
+The package requires Python `>=3.11`.
 
-Using `uv`:
+**Using `uv` (recommended):**
 
 ```bash
 uv sync --extra jax --group testing
 ```
 
-Using `pip`:
+**Using `pip`:**
 
 ```bash
 python -m venv .venv
@@ -39,11 +43,9 @@ pip install -e .[jax]
 pip install pytest pytest-benchmark scikit-learn shap
 ```
 
-Notes:
-
-- The build system will try to compile the optional C++ extension if a compatible compiler is available.
-- If compilation fails, installation falls back to a pure-Python build.
-- JAX is optional for some backends, but the package currently declares `jax` and `jaxlib` as core dependencies in `pyproject.toml`.
+> **Notes**
+> - The build system attempts to compile the optional C++ extension if a compatible compiler is detected. If compilation fails, installation falls back gracefully to a pure-Python build.
+> - JAX is optional for some backends, but `jax` and `jaxlib` are currently declared as core dependencies in `pyproject.toml`.
 
 ## Quick Start
 
@@ -64,29 +66,30 @@ model = RandomForestRegressor(n_estimators=8, max_depth=4, random_state=0).fit(X
 explainer = TreeExplainer(model, tree_solver="product_games")
 phi = explainer.shap_values(X[:10])
 
-print(phi.shape)              # (10, 6)
+print(phi.shape)          # (10, 6)
 print(explainer.expected_value)
 ```
 
-Available tree backends:
+**Available tree backends (`tree_solver`):**
 
-- `tree_solver="product_games"`: TreeSHAP via product-game factorization
-- `tree_solver="quadrature_tree"`: direct quadrature-tree backend
+| Value | Description |
+|---|---|
+| `"product_games"` | TreeSHAP via product-game factorization |
+| `"quadrature_tree"` | Direct quadrature-tree backend |
 
-Useful options:
+**Useful options:**
 
-- `backend_method="numpy_prefix_scan"`
-- `backend_method="numpy_logspace"`
-- `backend_method="jax_prefix_scan"`
-- `backend_method="jax_logspace"`
-- `m_q=<int>` to control the number of quadrature nodes
-- `use_cpp=True/False` for the quadrature-tree backend
+| Option | Values |
+|---|---|
+| `backend_method` | `"numpy_prefix_scan"`, `"numpy_logspace"`, `"jax_prefix_scan"`, `"jax_logspace"` |
+| `m_q` | Number of quadrature nodes (integer) |
+| `use_cpp` | `True` / `False` (quadrature-tree backend only) |
 
-Current limitations:
+**Current limitations:**
 
 - Only `model_output="raw"` is supported.
 - Only `feature_perturbation="tree_path_dependent"` is implemented.
-- The frontend currently targets supported scikit-learn tree estimators.
+- The frontend currently targets scikit-learn tree estimators.
 
 ### Product-kernel models
 
@@ -105,36 +108,29 @@ model = KernelRidge(kernel="rbf", gamma=0.5, alpha=1.0).fit(X, y)
 explainer = RBFLocalExplainer(model)
 phi = explainer.explain(X[0], method="logspace_numpy")
 
-print(phi.shape)              # (5,)
+print(phi.shape)          # (5,)
 ```
 
-Supported kernel backends:
-
-- `logspace_numpy`
-- `logspace_jax`
-- `prefix_scan_numpy`
-- `prefix_scan_jax`
+**Supported kernel backends (`method`):** `logspace_numpy`, `logspace_jax`, `prefix_scan_numpy`, `prefix_scan_jax`.
 
 ## Running Tests
-
-Run the main test suite with:
 
 ```bash
 pytest tests
 ```
 
-The tests cover:
+The test suite verifies:
 
-- agreement with naive Shapley implementations on small problems
-- frontend conversion from scikit-learn trees to the internal unified format
-- end-to-end agreement with `shap.TreeExplainer` on supported tree models
-- optional C++ extension behavior
+- agreement with naive Shapley implementations on small problems;
+- frontend conversion from scikit-learn trees to the internal unified format;
+- end-to-end agreement with `shap.TreeExplainer` on supported tree models;
+- optional C++ extension behavior.
 
-## Reproducing Benchmarks
+## Reproducing Experiments
 
-The repository contains several standalone benchmark scripts. Run them from the repository root.
+All benchmark scripts are run from the repository root.
 
-### 1. `m_q` convergence for kernel explainers
+### 1. Quadrature-node convergence for kernel explainers
 
 Generate raw convergence data:
 
@@ -142,13 +138,13 @@ Generate raw convergence data:
 python benchmarks/bench_mq_sweep.py
 ```
 
-Plot the aggregated results:
+Aggregate and plot results:
 
 ```bash
 python benchmarks/plot_mq_results.py
 ```
 
-Outputs are written under `benchmarks/results/mq/`.
+Outputs are written to `benchmarks/results/mq/`.
 
 ### 2. TreeSHAP runtime benchmark
 
@@ -156,9 +152,7 @@ Outputs are written under `benchmarks/results/mq/`.
 python benchmarks/treeshap_bench.py
 ```
 
-This benchmark compares several TreeSHAP implementations across different tree sizes and writes results to:
-
-- `benchmarks/treeshap_bench_results.json`
+Compares several TreeSHAP implementations across varying tree sizes. Results are saved to `benchmarks/treeshap_bench_results.json`.
 
 ### 3. Text-classification benchmark
 
@@ -166,27 +160,19 @@ This benchmark compares several TreeSHAP implementations across different tree s
 python benchmarks/text_classification_benchmark.py
 ```
 
-This script evaluates tree and kernel explainers on TF-IDF text-classification setups and writes outputs under:
+Evaluates tree and kernel explainers on TF-IDF text-classification setups. Outputs are written to `benchmarks/results/text_clf/`.
 
-- `benchmarks/results/text_clf/`
-
-The script may require extra packages such as `datasets`, `pandas`, `matplotlib`, `scipy`, `joblib`, and optionally `optuna`.
+> Additional dependencies may be required: `datasets`, `pandas`, `matplotlib`, `scipy`, `joblib`, and optionally `optuna`.
 
 ## Precomputed Results
 
-The repository already includes saved benchmark artifacts, including:
+Saved benchmark artifacts are included for inspection without rerunning experiments:
 
-- `benchmarks/results/mq/`: convergence CSVs and figures
-- `benchmarks/results/text/`: text benchmark tables and plots
-
-These are useful for inspection without rerunning the full experiments.
+- `benchmarks/results/mq/` — convergence CSVs and figures for the quadrature-node sweep
+- `benchmarks/results/text/` — tables and plots from the text-classification benchmark
 
 ## Implementation Notes
 
 - The package uses `scikit-build-core` and `pybind11` for the optional C++ extension.
-- Tree explanations are computed through an internal unified tree representation converted from scikit-learn models.
-- The kernel explainers use Gauss-Legendre quadrature with configurable `m_q`; if `m_q` is left unset, the implementation uses a default based on the feature dimension.
-
-## Anonymous Submission Notice
-
-This README is intentionally anonymized for double-blind review. It does not include author names, affiliations, acknowledgments, or links that would identify the submission.
+- Tree explanations are computed via an internal unified tree representation converted from scikit-learn models.
+- Kernel explainers use Gauss-Legendre quadrature with a configurable number of nodes `m_q`; when unset, a default is chosen based on the feature dimension.
