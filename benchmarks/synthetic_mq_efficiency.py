@@ -39,18 +39,19 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from pgshapley.kernels import RBFLocalExplainer
+from quadrashap.kernels.explainer import RBFLocalExplainer
 
 
 RESULTS_DIR = ROOT / "benchmarks" / "results" / "mq"
 
 # Reference (m_q = ceil(d/2)): use NumPy — avoids JAX JIT compilation at very
 # large m_q (e.g. m_q=5000 for d=10000) which exhausts memory on Metal.
-BACKEND_REF   = "logspace_numpy"
+BACKEND_REF   = "logspace_jax"
 
 # Sweep (m_q ≤ 500): use JAX — JIT compiles once and is fast on Metal for all
 # repeated calls.  At m_q ≤ 500 the carry tensors are small enough to compile.
 BACKEND_SWEEP = "logspace_jax"
+MQ_HIGHLIGHT_VALUES = [10, 20, 50, 80, 100]
 
 
 def ensure_dirs() -> None:
@@ -66,26 +67,34 @@ def make_normalized_regression(
     X, y = make_regression(
         n_samples=n_samples,
         n_features=n_features,
-        n_informative=max(5, min(n_features, 20)),
+        n_informative=int(np.ceil(n_features/4)), # max(5, min(n_features, 20)),
         noise=0.5,
         random_state=seed,
     )
-    X = StandardScaler().fit_transform(X)
-    y = StandardScaler().fit_transform(y.reshape(-1, 1)).ravel()
+    # X = StandardScaler().fit_transform(X)
+    # y = StandardScaler().fit_transform(y.reshape(-1, 1)).ravel()
     return X.astype(np.float64), y.astype(np.float64)
 
 
 def build_mq_values(n_features: int, n_sweep: int, seed: int) -> list[int]:
-    """Return n_sweep random m_q values from [1, min(500, ceil(d/2))].
+    """Return a sweep that always includes key highlight node counts.
 
-    The upper bound is always included in the sweep.
+    Included whenever they are within range:
+      - 20, 50, 80, 100
+      - the exact upper bound min(500, ceil(d/2))
+
+    Additional random values are drawn to reach at least ``n_sweep`` total
+    points when possible.
     """
     upper = min(500, math.ceil(n_features / 2))
     rng = np.random.default_rng(seed)
-    # Draw n_sweep-1 values from [1, upper-1], then append upper.
-    n_random = min(n_sweep - 1, upper - 1)
-    random_vals = rng.choice(np.arange(1, upper), size=n_random, replace=False).tolist()
-    values = sorted({int(v) for v in random_vals} | {upper})
+    required = {v for v in MQ_HIGHLIGHT_VALUES if v <= upper}
+    required.add(upper)
+
+    pool = [v for v in range(1, upper + 1) if v not in required]
+    n_random = min(max(0, n_sweep - len(required)), len(pool))
+    random_vals = rng.choice(pool, size=n_random, replace=False).tolist() if n_random > 0 else []
+    values = sorted({int(v) for v in random_vals} | required)
     return values
 
 
@@ -123,10 +132,10 @@ def evaluate_mq_distance(
 
     # ── Step 2: warm up JAX JIT once at the smallest sweep m_q ───────────────
     # m_q ≤ 500 is always small enough to compile on Metal without OOM.
-    print(f"    [warm-up JAX JIT  m_q={m_q_values[0]}, backend={BACKEND_SWEEP}] …",
-          end=" ", flush=True)
-    _ = explainer.explain(X_eval[0], m_q=m_q_values[0], method=BACKEND_SWEEP)
-    print("done")
+    # print(f"    [warm-up JAX JIT  m_q={m_q_values[0]}, backend={BACKEND_SWEEP}] …",
+    #       end=" ", flush=True)
+    # _ = explainer.explain(X_eval[0], m_q=m_q_values[0], method=BACKEND_SWEEP)
+    # print("done")
 
     # ── Step 3: sweep m_q and measure L2 distance to reference ───────────────
     agg_rows: list[dict]  = []   # one row per m_q  (mean / std / max)
@@ -166,14 +175,14 @@ def plot_results(df: pd.DataFrame, feature_counts: list[int]) -> None:
     # ── publication-quality global style ─────────────────────────────────────
     plt.rcParams.update({
         "font.family":        "serif",
-        "font.size":          13,
-        "axes.titlesize":     14,
-        "axes.labelsize":     13,
+        "font.size":          15,
+        "axes.titlesize":     15,
+        "axes.labelsize":     15,
         "axes.titleweight":   "bold",
         "axes.labelweight":   "bold",
         "axes.linewidth":     1.4,
-        "xtick.labelsize":    11,
-        "ytick.labelsize":    11,
+        "xtick.labelsize":    13,
+        "ytick.labelsize":    13,
         "xtick.major.width":  1.2,
         "ytick.major.width":  1.2,
         "xtick.direction":    "in",
@@ -304,7 +313,7 @@ def run_sweep(args: argparse.Namespace) -> None:
         print(f"  m_q sweep ({len(m_q_values)} pts): {m_q_values}")
 
         models: dict[str, object] = {
-            "krr_rbf": KernelRidge(kernel="rbf", alpha=1.0, gamma=1.0 / n_features),
+            "krr_rbf": KernelRidge(kernel="rbf", alpha=1.0, gamma=0.5), #1.0 / n_features),
         }
 
         for model_kind, model in models.items():
@@ -364,12 +373,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--feature-counts", nargs="+", type=int,
-        default=[10000],#[50, 100, 1000, 5000, 10000],
+        default=[100, 500, 1000, 5000],#, 10000],
         help="Feature counts to sweep (default: 50 100 1000 5000 10000).",
     )
     parser.add_argument(
         "--n-sweep", type=int, default=10,
-        help="Number of random m_q values sampled from [1, 500] (default: 10).",
+        help="Minimum total sweep size after always including key m_q values "
+             "(20, 50, 80, 100 when in range) and the exact upper bound.",
     )
     parser.add_argument(
         "--eval-samples", type=int, default=10,

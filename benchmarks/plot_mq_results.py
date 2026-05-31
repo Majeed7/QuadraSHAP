@@ -40,7 +40,7 @@ print(f"Feature counts found: {feature_counts}")
 COMBINED_FEATURES = [d for d in feature_counts if d != 100]
 
 # ── publication rcParams ───────────────────────────────────────────────────────
-FONT_SIZE  = 13
+FONT_SIZE  = 15
 mpl.rcParams.update({
     "font.family":        "serif",
     "font.size":          FONT_SIZE,
@@ -134,42 +134,42 @@ def _draw_panel(
     _enforce_min_decades(ax, min_decades=2.0)
 
     # ── exact zero annotation (where distance = 0 exactly) ───────────────────
-    if not zer.empty:
-        ylims = ax.get_ylim()
-        log_lo, log_hi = np.log10(ylims[0]), np.log10(ylims[1])
-        y_marker = 10 ** (log_lo + 0.12 * (log_hi - log_lo))
-        for mq_val in zer["m_q"]:
-            ax.plot(
-                mq_val, y_marker, marker="v", color=ZERO_CLR,
-                markersize=10, zorder=5, clip_on=False,
-                label=rf"$= 0$ at $m_q = {int(mq_val)}$",
-            )
+    # if not zer.empty:
+    #     ylims = ax.get_ylim()
+    #     log_lo, log_hi = np.log10(ylims[0]), np.log10(ylims[1])
+    #     y_marker = 10 ** (log_lo + 0.12 * (log_hi - log_lo))
+    #     for mq_val in zer["m_q"]:
+    #         ax.plot(
+    #             mq_val, y_marker, marker="v", color=ZERO_CLR,
+    #             markersize=10, zorder=5, clip_on=False,
+    #             label=rf"$= 0$ at $m_q = {int(mq_val)}$",
+    #         )
 
     # ── reference line: draw only if m_q_exact is inside the data range ──────
     ylims   = ax.get_ylim()
     log_lo  = np.log10(ylims[0])
     log_hi  = np.log10(ylims[1])
-    if x_min <= mq_exact <= x_max:
-        # m_q_exact falls within the sweep → draw vertical dashed line
-        ax.axvline(mq_exact, color="#888888", linestyle="--",
-                   linewidth=1.3, zorder=1)
-        ax.text(
-            mq_exact * 1.02,
-            10 ** (log_lo + 0.85 * (log_hi - log_lo)),
-            rf"$m_q^\star\!=\!{mq_exact}$",
-            color="#555555", fontsize=FONT_SIZE - 3, fontweight="bold",
-            va="top", ha="left",
-        )
-    else:
-        # m_q_exact is far outside the sweep → just annotate in the corner
-        ax.text(
-            0.97, 0.95,
-            rf"$m_q^\star = {mq_exact:,}$",
-            transform=ax.transAxes,
-            color="#555555", fontsize=FONT_SIZE - 3, fontweight="bold",
-            va="top", ha="right",
-            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.7", lw=0.8),
-        )
+    # if x_min <= mq_exact <= x_max:
+    #     # m_q_exact falls within the sweep → draw vertical dashed line
+    #     ax.axvline(mq_exact, color="#888888", linestyle="--",
+    #                linewidth=1.3, zorder=1)
+    #     ax.text(
+    #         mq_exact * 1.02,
+    #         10 ** (log_lo + 0.85 * (log_hi - log_lo)),
+    #         rf"$m_q^\star\!=\!{mq_exact}$",
+    #         color="#555555", fontsize=FONT_SIZE - 3, fontweight="bold",
+    #         va="top", ha="left",
+    #     )
+    # else:
+    #     # m_q_exact is far outside the sweep → just annotate in the corner
+    #     ax.text(
+    #         0.97, 0.95,
+    #         rf"$m_q^\star = {mq_exact:,}$",
+    #         transform=ax.transAxes,
+    #         color="#555555", fontsize=FONT_SIZE - 3, fontweight="bold",
+    #         va="top", ha="right",
+    #         bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.7", lw=0.8),
+    # )
 
     # ── formatting ────────────────────────────────────────────────────────────
     ax.set_title(rf"$d = {n_features:,}$", pad=5)
@@ -222,7 +222,7 @@ n_cols = len(COMBINED_FEATURES)   # all panels in one row
 
 fig, axes = plt.subplots(
     1, n_cols,
-    figsize=(4.5 * n_cols, 4.0),
+    figsize=(4 * n_cols, 4.0),
     squeeze=False,
 )
 axes_flat = axes.flatten()

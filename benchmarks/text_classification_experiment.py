@@ -75,6 +75,8 @@ TREE_EXPLAINER_REPEATS = 3
 # so very slow methods (e.g. shapiq on the largest forests) still leave at
 # least one usable measurement before the wall-clock timeout fires.
 TREE_EXPLAINER_REPEAT_BREAK_S = 10.0
+KERNEL_EXPLAINER_METHOD_NAMES = ["logspace_jax", "prefix_scan_numpy"]
+KERNEL_LOGSPACE_MQ = 200
 
 
 _SCRIPT_T0 = time.perf_counter()
@@ -83,6 +85,20 @@ _SCRIPT_T0 = time.perf_counter()
 def log(message: str) -> None:
     elapsed = time.perf_counter() - _SCRIPT_T0
     print(f"[{elapsed:7.2f}s] {message}", flush=True)
+
+
+def kernel_mq_for_method(method_name: str, d: int) -> int | None:
+    """Return the quadrature size for a kernel explainer method.
+
+    ``None`` means defer to ``RBFLocalExplainer.explain``'s default, which is
+    ``ceil(d / 2)``.
+    """
+    _ = d
+    if method_name.startswith("logspace"):
+        return KERNEL_LOGSPACE_MQ
+    if method_name.startswith("prefix_scan"):
+        return None
+    raise ValueError(f"Unknown kernel explainer method: {method_name}")
 
 
 @dataclass(frozen=True)
@@ -441,6 +457,14 @@ def krr_accuracy(estimator: KernelRidge, X, y: np.ndarray) -> float:
     return accuracy_score(y, preds)
 
 
+def _score_estimator(estimator, X_valid, y_valid: np.ndarray, scoring) -> float:
+    if callable(scoring):
+        return float(scoring(estimator, X_valid, y_valid))
+    if scoring == "accuracy":
+        return float(accuracy_score(y_valid, estimator.predict(X_valid)))
+    raise ValueError(f"Unsupported scoring mode without GridSearchCV: {scoring!r}")
+
+
 def train_or_load_model(
     *,
     bundle_path: Path,
@@ -458,6 +482,7 @@ def train_or_load_model(
     vectorizer: TfidfVectorizer,
     force_retrain: bool,
     model_kind: str,
+    do_search: bool,
 ) -> tuple[dict[str, object], bool]:
     if bundle_path.exists() and not force_retrain:
         log(f"    cache hit candidate at {bundle_path.name} ({model_kind}); loading to compare signature")
@@ -471,6 +496,33 @@ def train_or_load_model(
 
     search_X = sparse.vstack([X_train, X_valid]) if sparse.issparse(X_train) else np.vstack([X_train, X_valid])
     search_y = np.concatenate([y_train_fit, y_valid_fit])
+
+    if not do_search:
+        log(f"    direct fit: {model_kind} with fixed params (no GridSearchCV)")
+        estimator_valid = clone(estimator)
+        estimator_valid.fit(X_train, y_train_fit)
+        validation_score = _score_estimator(estimator_valid, X_valid, y_valid_fit, scoring)
+
+        estimator_final = clone(estimator)
+        t0 = time.perf_counter()
+        estimator_final.fit(search_X, search_y)
+        fit_time = time.perf_counter() - t0
+        log(f"    direct fit done in {fit_time:.2f}s; validation_score={validation_score:.4f}")
+
+        bundle = {
+            "model_kind": model_kind,
+            "signature": signature,
+            "estimator": estimator_final,
+            "best_params": {},
+            "best_validation_score": validation_score,
+            "fit_time_seconds": fit_time,
+            "feature_names": feature_names.tolist(),
+            "vectorizer": vectorizer,
+        }
+        log(f"    persisting bundle -> {bundle_path}")
+        joblib.dump(bundle, bundle_path)
+        return bundle, True
+
     test_fold = np.concatenate([np.full(len(y_train_fit), -1, dtype=int), np.zeros(len(y_valid_fit), dtype=int)])
     cv = PredefinedSplit(test_fold)
     n_combos = math.prod(len(v) for v in param_grid.values()) if param_grid else 1
@@ -530,6 +582,7 @@ def get_model_specs(is_binary: bool, max_tree_depth: int) -> list[dict[str, obje
             },
             "scoring": "accuracy",
             "dense_train": False,
+            "do_search": True,
         },
     ]
     if is_binary:
@@ -538,24 +591,11 @@ def get_model_specs(is_binary: bool, max_tree_depth: int) -> list[dict[str, obje
                 {
                     "model_kind": "svc_rbf",
                     "family": "kernel",
-                    "estimator": SVC(kernel="rbf"),
-                    "param_grid": {
-                        "C": [0.5, 1.0, 4.0],
-                        "gamma": ["scale", 0.1, 0.01],
-                    },
+                    "estimator": SVC(kernel="rbf", C=1.0, gamma="scale"),
+                    "param_grid": {},
                     "scoring": "accuracy",
                     "dense_train": True,
-                },
-                {
-                    "model_kind": "krr_rbf",
-                    "family": "kernel",
-                    "estimator": KernelRidge(kernel="rbf"),
-                    "param_grid": {
-                        "alpha": [0.1, 1.0, 10.0],
-                        "gamma": [0.1, 0.01, 0.001],
-                    },
-                    "scoring": krr_accuracy,
-                    "dense_train": True,
+                    "do_search": False,
                 },
             ]
         )
@@ -1012,6 +1052,90 @@ def _run_explainer_with_timeout(
     return payload
 
 
+def _benchmark_kernel_method_in_child(
+    method_name: str,
+    estimator,
+    X_batch: np.ndarray,
+    conn,
+) -> None:
+    """Run one kernel-explainer timing pass inside a killable child."""
+    try:
+        explainer = RBFLocalExplainer(estimator)
+        m_q = kernel_mq_for_method(method_name, explainer.d)
+        if X_batch.shape[0] > 0:
+            _ = explainer.explain(X_batch[0], method=method_name, m_q=m_q)  # warmup
+
+        times: list[float] = []
+        for row in X_batch:
+            t0 = time.perf_counter()
+            _ = explainer.explain(row, method=method_name, m_q=m_q)
+            times.append(time.perf_counter() - t0)
+
+        conn.send({
+            "status": "ok",
+            "times": [float(t) for t in times],
+        })
+    except BaseException as exc:
+        conn.send({
+            "status": "failed",
+            "message": f"{type(exc).__name__}: {exc}"[:300],
+        })
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def _run_kernel_explainer_with_timeout(
+    method_name: str,
+    estimator,
+    X_batch: np.ndarray,
+    timeout_s: float | None,
+) -> dict[str, object]:
+    """Wrap ``_benchmark_kernel_method_in_child`` in a fork + join(timeout)."""
+    import multiprocessing as mp
+    ctx = mp.get_context("fork")
+    parent_conn, child_conn = ctx.Pipe(duplex=False)
+    proc = ctx.Process(
+        target=_benchmark_kernel_method_in_child,
+        args=(method_name, estimator, X_batch, child_conn),
+    )
+    proc.start()
+    child_conn.close()
+    proc.join(timeout=timeout_s)
+    if proc.is_alive():
+        proc.terminate()
+        proc.join(timeout=5)
+        if proc.is_alive():
+            proc.kill()
+            proc.join()
+        try:
+            parent_conn.close()
+        except Exception:
+            pass
+        return {"status": "timeout", "message": f"exceeded {timeout_s:.0f}s"}
+
+    payload: dict[str, object] | None = None
+    try:
+        if parent_conn.poll():
+            payload = parent_conn.recv()
+    except EOFError:
+        payload = None
+    finally:
+        try:
+            parent_conn.close()
+        except Exception:
+            pass
+
+    if payload is None:
+        return {
+            "status": "failed",
+            "message": f"child exited code={proc.exitcode} without result",
+        }
+    return payload
+
+
 def benchmark_explainers(
     *,
     dataset_key: str,
@@ -1119,32 +1243,76 @@ def benchmark_explainers(
         return rows
 
     if bundle["model_kind"] in {"svc_rbf", "krr_rbf"}:
-        log("    constructing RBFLocalExplainer")
-        kernel_explainer = RBFLocalExplainer(estimator)
-        methods = ["logspace_numpy", "prefix_scan_numpy"]
-        for method in methods:
-            log(f"    timing rbf_local_{method} on {n_samples} instances")
-            times = []
-            for i, row in enumerate(X_eval_dense[:n_samples], 1):
-                t0 = time.perf_counter()
-                _ = kernel_explainer.explain(row, method=method)
-                times.append(time.perf_counter() - t0)
-                if i % max(1, n_samples // 5) == 0 or i == n_samples:
-                    log(f"      rbf_local_{method}: {i}/{n_samples} (avg so far: {np.mean(times):.4f}s)")
-            rows.append(
-                {
-                    "dataset": dataset_key,
-                    "model_kind": bundle["model_kind"],
-                    "explainer": f"rbf_local_{method}",
-                    "n_samples": n_samples,
-                    "avg_seconds_per_instance": float(np.mean(times)),
-                    "total_seconds": float(np.sum(times)),
-                    "n_repeats": 1,
-                    "additivity_error": None,
-                    "status": "ok",
-                    "message": None,
-                }
+        X_batch = np.ascontiguousarray(X_eval_dense[:n_samples])
+        for method in KERNEL_EXPLAINER_METHOD_NAMES:
+            log(f"    timing rbf_local_{method} on {n_samples} instances "
+                f"(timeout={timeout_s}s)")
+            wall_t0 = time.perf_counter()
+            result = _run_kernel_explainer_with_timeout(
+                method, estimator, X_batch, timeout_s
             )
+            wall_s = time.perf_counter() - wall_t0
+            status = str(result.get("status"))
+
+            if status == "ok":
+                times = list(result.get("times") or [])
+                total_time = float(np.sum(times))
+                avg_time = total_time / max(1, len(times))
+                log(
+                    f"      rbf_local_{method}: total={total_time:.4f}s "
+                    f"avg={avg_time:.4f}s/inst (wall={wall_s:.2f}s)"
+                )
+                rows.append(
+                    {
+                        "dataset": dataset_key,
+                        "model_kind": bundle["model_kind"],
+                        "explainer": f"rbf_local_{method}",
+                        "n_samples": n_samples,
+                        "avg_seconds_per_instance": avg_time,
+                        "total_seconds": total_time,
+                        "n_repeats": 1,
+                        "additivity_error": None,
+                        "status": "ok",
+                        "message": None,
+                        "wall_seconds": wall_s,
+                    }
+                )
+            elif status == "timeout":
+                log(f"      rbf_local_{method}: TIMEOUT after {wall_s:.1f}s "
+                    f"(limit {timeout_s}s)")
+                rows.append(
+                    {
+                        "dataset": dataset_key,
+                        "model_kind": bundle["model_kind"],
+                        "explainer": f"rbf_local_{method}",
+                        "n_samples": n_samples,
+                        "avg_seconds_per_instance": None,
+                        "total_seconds": None,
+                        "n_repeats": 0,
+                        "additivity_error": None,
+                        "status": "timeout",
+                        "message": str(result.get("message", "")),
+                        "wall_seconds": wall_s,
+                    }
+                )
+            else:
+                msg = str(result.get("message", "unknown error"))
+                log(f"      rbf_local_{method}: failed: {msg}")
+                rows.append(
+                    {
+                        "dataset": dataset_key,
+                        "model_kind": bundle["model_kind"],
+                        "explainer": f"rbf_local_{method}",
+                        "n_samples": n_samples,
+                        "avg_seconds_per_instance": None,
+                        "total_seconds": None,
+                        "n_repeats": 0,
+                        "additivity_error": None,
+                        "status": "failed",
+                        "message": msg[:300],
+                        "wall_seconds": wall_s,
+                    }
+                )
     return rows
 
 
@@ -1161,7 +1329,14 @@ def explain_single_instance(
         return extract_tree_pg_contrib(values, target_class)
     if bundle["model_kind"] in {"svc_rbf", "krr_rbf"}:
         explainer = RBFLocalExplainer(estimator)
-        return np.asarray(explainer.explain(row_dense, method="logspace_numpy"), dtype=float)
+        return np.asarray(
+            explainer.explain(
+                row_dense,
+                method="logspace_numpy",
+                m_q=kernel_mq_for_method("logspace_numpy", explainer.d),
+            ),
+            dtype=float,
+        )
     raise ValueError(f"Unsupported model kind: {bundle['model_kind']}")
 
 
@@ -1528,12 +1703,13 @@ def run_text_benchmark(args: argparse.Namespace) -> None:
     ensure_dirs()
     rng = np.random.default_rng(args.seed)
     selected_specs = [DATASET_SPECS[key] for key in args.datasets]
+    requested_models = set(args.models) if args.models else None
     log(f"run_text_benchmark: {len(selected_specs)} datasets selected -> {[s.key for s in selected_specs]}")
     log(f"  args: max_features={args.max_features} vectorizer_fit_limit={args.vectorizer_fit_limit} "
         f"tree_train={args.tree_train_limit} tree_valid={args.tree_valid_limit} "
         f"kernel_train={args.kernel_train_limit} kernel_valid={args.kernel_valid_limit} "
         f"explain_samples={args.explain_samples} perturbation_samples={args.perturbation_samples} "
-        f"removal_sizes={args.removal_sizes} families={args.families} "
+        f"removal_sizes={args.removal_sizes} families={args.families} models={args.models} "
         f"max_tree_depth={args.max_tree_depth} explainer_timeout={args.explainer_timeout} "
         f"force_retrain={args.force_retrain} seed={args.seed}")
     metrics_rows: list[dict[str, object]] = []
@@ -1571,6 +1747,11 @@ def run_text_benchmark(args: argparse.Namespace) -> None:
         model_specs = get_model_specs(is_binary=is_binary, max_tree_depth=args.max_tree_depth)
         if args.families != "both":
             model_specs = [m for m in model_specs if m["family"] == args.families]
+        if requested_models is not None:
+            model_specs = [m for m in model_specs if m["model_kind"] in requested_models]
+        if not model_specs:
+            log(f"  no requested models available for {spec.key}; skipping dataset")
+            continue
         log(f"  is_binary={is_binary}; families={args.families}; max_tree_depth={args.max_tree_depth}; "
             f"will train {len(model_specs)} models: {[m['model_kind'] for m in model_specs]}")
         dataset_dir = MODEL_DIR / slugify(spec.key)
@@ -1632,6 +1813,7 @@ def run_text_benchmark(args: argparse.Namespace) -> None:
                 vectorizer=vectorizer,
                 force_retrain=args.force_retrain,
                 model_kind=model_spec["model_kind"],
+                do_search=bool(model_spec["do_search"]),
             )
 
             X_test_eval = dense_rows(X_test) if model_spec["dense_train"] else X_test
@@ -1722,6 +1904,7 @@ def run_text_benchmark(args: argparse.Namespace) -> None:
 
 
 DEBUG_DEFAULT_ARGS = ["run", "--datasets", "rotten_tomatoes"]
+MODEL_CHOICES = ["random_forest", "svc_rbf"]
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -1738,6 +1921,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=sorted(DATASET_SPECS.keys()),
         help="Dataset keys to benchmark.",
     )
+    run_parser.add_argument(
+        "--models",
+        nargs="+",
+        choices=MODEL_CHOICES,
+        help="Optional subset of model kinds to run.",
+    )
     run_parser.add_argument("--max-features", type=int, default=300)
     run_parser.add_argument("--vectorizer-fit-limit", type=int, default=5000)
     run_parser.add_argument("--tree-train-limit", type=int, default=5000)
@@ -1752,7 +1941,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=["tree", "kernel", "both"],
         default="both",
         help="Which model families to run: 'tree' (random_forest), "
-        "'kernel' (svc_rbf, krr_rbf), or 'both' (default).",
+        "'kernel' (svc_rbf), or 'both' (default).",
     )
     run_parser.add_argument(
         "--max-tree-depth",

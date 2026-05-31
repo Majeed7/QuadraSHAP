@@ -4,6 +4,10 @@ venv/
 env/
 ENV/
 backup/
+.uv-python/
+.uv-cache/
+.tools/
+model/
 
 # Python cache
 __pycache__/
