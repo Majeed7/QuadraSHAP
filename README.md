@@ -1,8 +1,30 @@
-# QuadraSHAP: Stable and Scalable Shapley Values for Product Games via Gauss-Legendre Quadrature
+# QuadraSHAP: Exact Shapley Values in Logarithmic Time for Trees and Kernels
+
+<p align="center">
+  <img src="data/quadraSHAP_logo.png" alt="alt text" width="400">
+</p>
 
 This repository provides the official implementation accompanying the paper:
 
 > **QuadraSHAP: Stable and Scalable Shapley Values for Product Games via Gauss-Legendre Quadrature**
+
+[//]: # (If you use our algorithm in your research we would appreciate a citation to the following paper:)
+
+[//]: # (```)
+
+[//]: # (@article{mohammadi2026quadrashap,)
+
+[//]: # (  title = {QuadraSHAP: Stable and Scalable Shapley Values for Product Games via Gauss--Legendre Quadrature},)
+
+[//]: # (  author = {Mohammadi, Majid and Reznikov, Grigory and Sinitcyn, Pavel and Muandet, Krikamol and Chau, Siu Lun},)
+
+[//]: # (  journal = {arXiv preprint arXiv:2605.05870},)
+
+[//]: # (  year = {2026})
+
+[//]: # (})
+
+[//]: # (```)
 
 QuadraSHAP reformulates Shapley-value computation for product games as a Gauss-Legendre quadrature problem, yielding estimates that are both numerically stable and scalable to high-dimensional settings. The library covers two concrete application domains:
 
