@@ -26,11 +26,10 @@ This repository provides the official implementation accompanying the paper:
 
 [//]: # (```)
 
-QuadraSHAP reformulates Shapley-value computation for product games as a Gauss-Legendre quadrature problem, yielding estimates that are both numerically stable and scalable to high-dimensional settings. The library covers three concrete application domains:
+QuadraSHAP reformulates Shapley-value computation for product games as a Gauss-Legendre quadrature problem, yielding estimates that are both numerically stable and scalable to high-dimensional settings. The library covers two concrete application domains:
 
 - **`TreeExplainer`**: TreeSHAP-style explanations for scikit-learn tree models, with interchangeable numerical backends.
-- **Product-kernel explainers**: local Shapley values for models whose prediction function factorizes across features, such as RBF kernel methods.
-- **`CoxPHExplainer`**: relative-hazard explanations for fitted Cox models, using whole empirical background rows and memory-bounded quadrature.
+- **Multiplicative-model explainers** (`RKHSExplainer`, `PoissonExplainer`, `GammaExplainer`, `TweedieExplainer`, `GLMExplainer`, `LogisticExplainer`, `NaiveBayesExplainer`, `CoxExplainer`): exact or certified-accuracy Shapley values for every model whose prediction is a sum of products of per-feature factors, from product-kernel machines to log-link GLMs, odds-scale classifiers and Cox models.
 
 The repository is organized as a research artifact: library code lives under `src/`, correctness tests under `tests/`, and benchmark scripts with precomputed outputs under `benchmarks/`.
 
@@ -40,7 +39,8 @@ The repository is organized as a research artifact: library code lives under `sr
 |---|---|
 | `src/quadrashap/` | Package source code |
 | `src/quadrashap/treeshap/` | Tree-model explainers and numerical backends |
-| `src/quadrashap/kernels/` | Explainers for product-form kernel models |
+| `src/quadrashap/multiplicative/` | Engine and named explainers for multiplicative models (product kernels, GLMs, odds-scale classifiers, Cox) |
+| `src/quadrashap/product_games/` | Quadrature cores, a priori node budget, blockwise evaluation |
 | `csrc/` | Optional C++ extension for the quadrature-tree backend |
 | `tests/` | Correctness and regression tests |
 | `benchmarks/` | Scripts for runtime and approximation experiments |
@@ -70,7 +70,25 @@ pip install pytest pytest-benchmark scikit-learn shap
 > - The build system attempts to compile the optional C++ extension if a compatible compiler is detected. If compilation fails, installation falls back gracefully to a pure-Python build.
 > - JAX is optional for some backends, but `jax` and `jaxlib` are currently declared as core dependencies in `pyproject.toml`.
 
+For the CUDA tree backend, install the GPU extra matching a CUDA 12 runtime:
+
+```bash
+uv sync --extra gpu --group testing
+```
+
 ## Quick Start
+
+### Drop-in replacement for SHAP
+
+```python
+# import shap
+# explainer = shap.TreeExplainer(model)
+from quadrashap import TreeExplainer
+
+explainer = TreeExplainer(model)
+phi = explainer.shap_values(X_test)
+base_value = explainer.expected_value
+```
 
 ### Tree models
 
@@ -107,6 +125,21 @@ print(explainer.expected_value)
 | `backend_method` | `"numpy_prefix_scan"`, `"numpy_logspace"`, `"jax_prefix_scan"`, `"jax_logspace"` |
 | `m_q` | Number of quadrature nodes (integer) |
 | `use_cpp` | `True` / `False` (quadrature-tree backend only) |
+| `device` | `"cpu"` / `"cuda"` (quadrature-tree backend only) |
+
+The CUDA path uses the same exact edge-telescoping algorithm as the native
+quadrature-tree solver.  It keeps model data resident, streams samples through
+sibling-paired warps, precomputes quadrature factors, and converts the forward
+node products into subtree sums in place; no leaf-prefix tensor is allocated.
+
+```python
+explainer = TreeExplainer(
+    model,
+    tree_solver="quadrature_tree",
+    device="cuda",
+)
+phi = explainer.shap_values(X_test)
+```
 
 **Current limitations:**
 
@@ -114,55 +147,100 @@ print(explainer.expected_value)
 - Only `feature_perturbation="tree_path_dependent"` is implemented.
 - The frontend currently targets scikit-learn tree estimators.
 
-### Product-kernel models
+### Multiplicative models: kernels, GLMs, classifiers on the odds scale, Cox models
 
-For kernel methods with factorized feature kernels, use `RBFLocalExplainer` or `ProductKernelLocalExplainer`.
+Every model with a sum-of-products representation (Definition 2 of the paper) is explained
+by the same engine, through a named explainer per family. All of them share one interface:
+`explain(x, value_function=..., ...)`, `shap_values(X)`, `expected_value`, `node_budget(x, eps)`.
+
+| Explainer | Models | Attributed quantity (scale) |
+|---|---|---|
+| `RKHSExplainer` | SVR/SVC, `KernelRidge`, Gaussian processes with an RBF kernel | kernel expansion `sum_r alpha_r k(x, x_r)` |
+| `PoissonExplainer`, `GammaExplainer`, `TweedieExplainer` | scikit-learn log-link GLMs | mean response |
+| `GLMExplainer` | any log-link GLM/GAM: `(beta, intercept)` or a statsmodels result | mean response |
+| `LogisticExplainer` | `LogisticRegression` (binary or a class pair of a multinomial model) | odds |
+| `NaiveBayesExplainer` | `GaussianNB`, `BernoulliNB`, `MultinomialNB` | odds |
+| `CoxExplainer` | lifelines `CoxPHFitter`, scikit-survival `CoxPHSurvivalAnalysis`, or log hazard ratios | hazard ratio |
+| `TreeExplainer` | scikit-learn tree ensembles | prediction (path-dependent value function) |
+| `Explainer(model)` | picks one of the above from the fitted estimator | |
+
+Anything else with a product structure is wrapped with `FactorModel(coef, factor_fn, d)` and passed to
+`QuadraSHAP`, the engine itself. Each family has a flat, step-through example script in the repository
+root: `run_rkhs_example.py`, `run_poisson_example.py`, `run_gamma_example.py`, `run_tweedie_example.py`,
+`run_glm_example.py`, `run_logistic_example.py`, `run_naive_bayes_example.py`, `run_cox_example.py`,
+`run_tree_example.py` and `run_explainer_example.py`; each verifies the attributions against exhaustive
+coalition enumeration through the model itself.
 
 ```python
 import numpy as np
 from sklearn.datasets import make_regression
 from sklearn.kernel_ridge import KernelRidge
 
-from quadrashap.kernels.explainer import RBFLocalExplainer
+from quadrashap import RKHSExplainer
 
-X, y = make_regression(n_samples=200, n_features=5, random_state=0)
-model = KernelRidge(kernel="rbf", gamma=0.5, alpha=1.0).fit(X, y)
+X, y = make_regression(n_samples=200, n_features=50, random_state=0)
+model = KernelRidge(kernel="rbf", gamma=0.02, alpha=1.0).fit(X, y)
 
-explainer = RBFLocalExplainer(model)
-phi = explainer.explain(X[0], method="logspace_numpy")
+explainer = RKHSExplainer(model, background=X[:100])
 
-print(phi.shape)          # (5,)
+# neutral-factor value function (absent features are dropped from the kernel; the default for kernels)
+phi = explainer.explain(X[0])
+
+# empirical interventional value function over the background dataset,
+# and the baseline value function for a single reference point
+phi_int = explainer.explain(X[0], "interventional")
+phi_base = explainer.explain(X[0], "baseline", baseline=X[1])
+
+# the number of Gauss-Legendre nodes is chosen a priori so that every
+# attribution is within eps of its exact value (default eps=1e-3)
+phi, report = explainer.explain(X[0], return_report=True)
+print(report)                    # m_q, Lambda, certified error, exactness threshold, efficiency residual, time
+phi_exact = explainer.explain(X[0], m_q="exact")   # ceil(d/2) nodes
 ```
-
-**Supported kernel backends (`method`):** `logspace_numpy`, `logspace_jax`, `prefix_scan_numpy`, `prefix_scan_jax`.
-
-### Cox relative hazard
-
-To explain a fitted Cox model on its multiplicative output scale, provide its
-coefficient vector and processed training-background rows. Use the same feature
-order and preprocessing as the fitted model:
 
 ```python
-from quadrashap import CoxPHExplainer
+from sklearn.linear_model import PoissonRegressor
+from quadrashap import PoissonExplainer, Explainer
 
-explainer = CoxPHExplainer(model.coef_, X_train[:4])
-explanation = explainer.explain(X_test[0], m_q=16)
-print(explanation.values)
-print(explanation.base_value, explanation.prediction)
-# m_q=None uses the sufficient exact rule, ceil(nonzero_coefficients / 2).
+glm = PoissonRegressor().fit(X_counts, y_counts)
+phi = PoissonExplainer(glm, background=X_counts[:100]).explain(x)      # on the expected-count scale
+phi = Explainer(glm, background=X_counts[:100]).explain(x)             # same, dispatched automatically
 ```
 
-This attributes `exp(x @ model.coef_)` using whole empirical background rows.
-The positive-factor backend evaluates the product in logarithms and processes
-blocks of nodes to bound memory. SciPy supplies the quadrature rule. See the
-[executed Cox notebook](tutorials/cox_survival.ipynb) for model fitting,
-training-only preprocessing, measured runtimes, and exact-versus-approximate
-comparisons. Install its dependencies with
-`uv pip install --python .venv/bin/python -r benchmarks/requirements-cox.txt`.
+**Value functions (`value_function`):** `"neutral"` (product kernels only, their default;
+the value function of PKeX-Shapley), `"baseline"` (reference point `baseline=`),
+`"interventional"` (background dataset `background=`; the default for all other
+families; the baseline value function is its single-row special case). All three are weighted sums of product games and
+share the same quadrature machinery; the interventional cost grows linearly
+with the number of background rows.
+
+**Node selection:** `m_q=None` (default) computes a certified budget from the
+factor tables before any quadrature is run (`QuadraSHAP.node_budget`,
+`quadrashap.product_games.budget`); `m_q="exact"` uses `ceil(d/2)`; an integer
+is used as given. The certificate bounds the quadrature error on the scale of
+the largest marginal contribution and costs one pass over the factor tables.
+
+**Blockwise evaluation (`block_size`):** the sum over component-background pairs
+and over quadrature nodes is a reduction, so both are processed in blocks that are
+accumulated into the attribution vector, exactly and with bounded peak memory.
+`block_size="auto"` (default) plans the blocks from the memory currently available
+on the machine (or an explicit `memory_budget="512MB"`) and does not block when the
+full computation fits; for the NumPy prefix scan it additionally keeps each block
+around 16 MB, where cache-resident blocks run 1.5-2.5x faster than the unblocked
+computation (`target_block_bytes=None` disables this cap). A positive integer fixes
+the number of pairs per block and `block_size=-1` switches blocking off. The plan
+used by the last call is available as `explainer.last_block_plan`. Install `psutil` (`pip install -e .[memory]`) for accurate detection of the available memory; otherwise the planner falls back to `sysconf`/`sysctl`.
+
+With `return_report=True` the report also carries `efficiency_residual`, the a posteriori check $|\sum_i\phi_i-(f(x)-v(\varnothing))|$: exactly zero at or above the exactness threshold, nonzero below it, and a necessary condition only (signed per-feature errors can cancel), so it complements rather than replaces the certified bound.
+
+**Backends (`backend`):** `logspace_numpy`, `logspace_jax`, `prefix_scan_numpy`,
+`prefix_scan_jax`, or `"auto"`. The previous `RBFLocalExplainer` /
+`ProductKernelLocalExplainer` classes remain available with their old
+signature (exact quadrature by default); `QuadraSHAP(model)` still works and dispatches to the right adapter.
 
 ## Tutorials
 
-The [`tutorials/`](tutorials/) directory contains executable Jupyter
+The [`tutorials/`](tutorials/) directory contains two executable Jupyter
 notebooks that derive the method from the paper, connect the mathematics to
 the implementation, and include naive exact baselines, correctness checks,
 quadrature-convergence examples, and measured timing comparisons:
@@ -171,12 +249,6 @@ quadrature-convergence examples, and measured timing comparisons:
   for a scikit-learn decision tree versus exhaustive coalition enumeration.
 - [Product-kernel tutorial](tutorials/kernel_methods.ipynb) — local Shapley
   values for RBF Kernel Ridge versus exhaustive product-game enumeration.
-- [Cox survival experiment](tutorials/cox_survival.ipynb) — dense ridge Cox
-  models on myeloma and glioma data, with measured approximate attribution and
-  a full exact calculation on the myeloma model.
-- [Full exact glioma follow-up](tutorials/cox_survival_exact_glioma.ipynb) —
-  the 198,033-node exact calculation on the saved 396,065-feature model, using
-  the same explained patient and background as the approximations.
 
 See the [tutorial guide](tutorials/README.md) for installation and launch
 instructions.
@@ -197,6 +269,18 @@ The test suite verifies:
 ## Reproducing Experiments
 
 All benchmark scripts are run from the repository root.
+
+### 0. A priori node budget on a trained kernel ridge model
+
+```bash
+python benchmarks/kernel_node_budget_bench.py --d 1000 --n-train 500
+python benchmarks/kernel_node_budget_bench.py --value-function interventional --n-background 20
+```
+
+Writes `benchmarks/results/kernel_node_budget/{tuned,sweep}_<value_function>.csv`
+with the certified budget, the certified bound, the observed error against the
+exact rule, the empirically minimal budget and the timings, for a CV-tuned
+bandwidth and for a bandwidth sweep.
 
 ### 1. Quadrature-node convergence for kernel explainers
 
@@ -232,15 +316,37 @@ Evaluates tree and kernel explainers on TF-IDF text-classification setups. Outpu
 
 > Additional dependencies may be required: `datasets`, `pandas`, `matplotlib`, `scipy`, `joblib`, and optionally `optuna`.
 
+### 4. GPU TreeSHAP benchmark
+
+```bash
+uv sync --extra gpu --extra benchmarks --group testing
+python benchmarks/gpu_treeshap_bench.py
+```
+
+This reproduces the synthetic and text tree comparisons with
+QuadraSHAP-GPU and SHAP's CUDA `GPUTreeExplainer`. Outputs are written to
+`benchmarks/results/gpu/`. The GPUTreeSHAP baseline requires SHAP to be built
+from source with its optional CUDA extension.
+The worker mode accepts `--n-samples` and repeats cached inputs as necessary,
+which can be used to reproduce the saved batch-scaling experiment (batch
+sizes 1 through 32,000).
+Large scalar batches use exact FP64 checkpointed treelets: only component-root
+state is stored in global memory, while 7- or 15-node connected components are
+reconstructed in shared memory. The compact internal-node kernel remains the
+lower-latency path below the measured 1,536-row crossover.
+
 ## Precomputed Results
 
 Saved benchmark artifacts are included for inspection without rerunning experiments:
 
 - `benchmarks/results/mq/` — convergence CSVs and figures for the quadrature-node sweep
 - `benchmarks/results/text/` — tables and plots from the text-classification benchmark
+- `benchmarks/results/gpu/` — GPU tables and optimized batch-scaling results
 
 ## Implementation Notes
 
 - The package uses `scikit-build-core` and `pybind11` for the optional C++ extension.
 - Tree explanations are computed via an internal unified tree representation converted from scikit-learn models.
-- Kernel explainers use Gauss-Legendre quadrature with a configurable number of nodes `m_q`; when unset, a default is chosen based on the feature dimension.
+- CUDA tree explanations use ragged per-tree quadrature checkpoints and reuse
+  their feature-partial workspace after every treelet depth.
+- Kernel explainers use Gauss-Legendre quadrature with a configurable number of nodes `m_q`; when unset, the number of nodes is chosen a priori from the factor tables so that the attributions are certified to lie within `eps` (default `1e-3`) of their exact values (see `quadrashap.product_games.budget`).

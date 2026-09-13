@@ -88,11 +88,5 @@ Thumbs.db
 *.dylib
 _skbuild/
 
-# Downloaded research datasets and generated experiment matrices
-data/experiments/raw/
-data/experiments/processed/
-
-# Reproducible Cox model states and full attribution arrays (retained locally)
-benchmarks/results/cox_survival/*/*.npz
-benchmarks/results/cox_survival/*/*.npy
-benchmarks/results/cox_survival/*/coefficients.csv
+# experiment model cache (experiments/exp4)
+models/

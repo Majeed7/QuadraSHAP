@@ -1,3 +1,26 @@
+"""
+Shapley values of product games by Gauss--Legendre quadrature.
+
+A product game with present factors ``u_j`` and absent factors ``ut_j`` has
+coalition value ``v(S) = prod_{j in S} u_j * prod_{j not in S} ut_j``.  Its
+Shapley values admit the one-dimensional integral representation
+
+    phi_i = (u_i - ut_i) * int_0^1 prod_{j != i} ((1 - t) ut_j + t u_j) dt,
+
+whose integrand is a polynomial of degree at most ``d - 1`` in ``t``.  An
+``m_q``-point Gauss--Legendre rule on [0, 1] evaluates it exactly whenever
+``m_q >= ceil(d / 2)`` and with geometrically decaying error below that
+threshold (Proposition 2 of the paper); the a priori node budget for a
+prescribed accuracy lives in :mod:`quadrashap.product_games.budget`.
+
+All routines below take the table ``K = u - ut`` of shape ``(m, d)``, one row
+per game, and optionally the absent-factor table ``Ut`` (broadcastable to
+``(m, d)``).  With ``Ut=None`` the absent factor is the neutral factor 1, i.e.
+the product game of Definition 1, ``v(S) = prod_{j in S} u_j``.  Fixing
+``Ut`` to the factors of a reference point gives the baseline value function,
+and averaging over background rows gives the empirical interventional value
+function (Section 4 of the paper); both are handled by the callers.
+"""
 import numpy as np
 
 # Optional JAX support
@@ -19,6 +42,18 @@ def _gauss_legendre_01_numpy(m_q: int, dtype=np.float64):
     x = 0.5 * (x + 1.0)
     w = 0.5 * w
     return x.astype(dtype, copy=False), w.astype(dtype, copy=False)
+
+
+def _absent_factors_numpy(K: np.ndarray, Ut):
+    """Return the absent-factor table broadcast against ``K`` (``None`` -> neutral factor 1)."""
+    if Ut is None:
+        return np.ones((1, K.shape[1]), dtype=K.dtype)
+    Ut = np.asarray(Ut, dtype=K.dtype)
+    if Ut.ndim == 1:
+        Ut = Ut[None, :]
+    if Ut.shape[-1] != K.shape[1] or Ut.ndim != 2 or Ut.shape[0] not in (1, K.shape[0]):
+        raise ValueError(f"Ut must broadcast to K.shape={K.shape}; got {Ut.shape}")
+    return Ut
 
 
 def _jax_work_dtype(K: np.ndarray):
@@ -44,134 +79,70 @@ def _jax_work_dtype(K: np.ndarray):
 
 class ProductGamesShapleyNumpy:
     """
-    Alpha-free product-game Shapley factors in NumPy.
+    Coefficient-free product-game Shapley factors in NumPy.
 
-    This class operates on the product-game array K of shape (m, d).
-    It returns a matrix Phi of shape (m, d) such that for any coefficients
-    alpha of shape (m,), the Shapley values are:
+    This class operates on the table ``K = u - ut`` of shape (m, d), one product
+    game per row, with optional absent factors ``Ut`` (default: the neutral
+    factor 1).  It returns a matrix Phi of shape (m, d) with
 
-        shapley = (Phi * alpha[:, None]).sum(axis=0)
+        Phi[r, i] = (u_i - ut_i) * sum_q w_q prod_{j != i} (ut_j + tau_q (u_j - ut_j))
 
-    Here K is the per-feature factor used inside the product:
+    for game r, so that for any coefficients alpha of shape (m,) the Shapley
+    values of the weighted sum of games are
 
-        v_S(m) = prod_{j in S} (1 + K[m, j])    (up to your model-specific shift)
+        shapley = (Phi * alpha[:, None]).sum(axis=0).
 
-    The implementations match the backends in `explainer.py` but do not depend
-    on any model or kernel; they only require K and quadrature size m_q.
+    The implementations do not depend on any model or kernel; they only
+    require K (and Ut) and the quadrature size m_q.  ``phi_matrix_prefix_scan``
+    is division-free and exact for vanishing factors; ``phi_matrix_logspace``
+    forms one shared product per node in log-space and is the memory-lean
+    choice when all factors are non-zero.
     """
 
-    def phi_matrix_prefix_scan(self, K: np.ndarray, m_q: int) -> np.ndarray:
+    def phi_matrix_prefix_scan(self, K: np.ndarray, m_q: int, Ut=None, node_block: int | None = None) -> np.ndarray:
+        """Division-free evaluation by exclusive prefix and suffix products.
+
+        ``node_block`` limits how many quadrature nodes are processed at once: the
+        working tensors have shape ``(node_block, m, d)`` and the sum over nodes is
+        accumulated, which is exact and bounds peak memory.  ``None`` processes all
+        nodes at once.
+        """
         K = np.asarray(K, dtype=np.float64)
         m, d = K.shape
+        Ut = _absent_factors_numpy(K, Ut)
 
         x, w = _gauss_legendre_01_numpy(m_q, dtype=np.float64)
-        X = x[:, None, None]  # (m_q,1,1)
-        B = 1.0 + X * K[None, :, :]  # (m_q, m, d)
+        nb = m_q if node_block is None else max(1, int(node_block))
+        acc = np.zeros((m, d), dtype=np.float64)
+        for q0 in range(0, m_q, nb):
+            X = x[q0:q0 + nb, None, None]  # (nb,1,1)
+            B = Ut[None, :, :] + X * K[None, :, :]  # (nb, m, d): factors (1-t) ut + t u
 
-        pref = np.cumprod(B, axis=2)
-        pref = np.concatenate(
-            [np.ones((B.shape[0], m, 1), dtype=B.dtype), pref[:, :, :-1]], axis=2
-        )
+            pref = np.cumprod(B, axis=2)
+            pref = np.concatenate(
+                [np.ones((B.shape[0], m, 1), dtype=B.dtype), pref[:, :, :-1]], axis=2
+            )
 
-        suf = np.cumprod(B[:, :, ::-1], axis=2)[:, :, ::-1]
-        suf = np.concatenate(
-            [suf[:, :, 1:], np.ones((B.shape[0], m, 1), dtype=B.dtype)], axis=2
-        )
+            suf = np.cumprod(B[:, :, ::-1], axis=2)[:, :, ::-1]
+            suf = np.concatenate(
+                [suf[:, :, 1:], np.ones((B.shape[0], m, 1), dtype=B.dtype)], axis=2
+            )
 
-        Q_no_i = pref * suf  # (m_q, m, d)
-        acc = (w[:, None, None] * Q_no_i).sum(axis=0)  # (m, d)
+            pref *= suf  # leave-one-out products, (nb, m, d)
+            acc += (w[q0:q0 + nb, None, None] * pref).sum(axis=0)
         return K * acc
 
-    def phi_matrix_positive_logspace(
-        self, log_factors: np.ndarray, m_q: int, *, log_multiplier=None,
-        node_block_size: int = 64, nodes_weights=None, timeout_seconds=None,
-        progress_callback=None,
-    ) -> np.ndarray:
-        """Bound temporary memory for high-dimensional positive product games.
+    def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-12) -> np.ndarray:
+        """Compute Phi (m,d) using the log-space shared product.
 
-        Rows encode ``v(S) = exp(log_multiplier + sum(log_factors[S]))``.
-        This is the same Gauss–Legendre integral as the existing methods, with
-        positive factors supplied as logarithms to avoid overflowing exp(log_u).
-        Only a block of nodes by d features is materialized at a time. SciPy is
-        needed only when a precomputed (nodes, weights) pair is not supplied.
-        ``timeout_seconds`` bounds integration, excluding rule construction.
-        An optional callback receives (completed_games, completed_nodes_in_game,
-        games, nodes), at most once per 30 seconds and at each game boundary.
-        """
-        from time import perf_counter
-
-        log_u = np.asarray(log_factors, dtype=np.float64)
-        if log_u.ndim != 2 or not np.isfinite(log_u).all():
-            raise ValueError("log_factors must be a finite (games, features) matrix")
-        if not isinstance(m_q, (int, np.integer)) or m_q < 1:
-            raise ValueError("m_q must be a positive integer")
-        if not isinstance(node_block_size, (int, np.integer)) or node_block_size < 1:
-            raise ValueError("node_block_size must be a positive integer")
-        if timeout_seconds is not None and timeout_seconds <= 0:
-            raise ValueError("timeout_seconds must be positive")
-        if nodes_weights is None:
-            from scipy.special import roots_legendre
-            nodes, weights = roots_legendre(m_q)
-            nodes, weights = (nodes + 1) / 2, weights / 2
-        else:
-            nodes, weights = (np.asarray(a, dtype=np.float64) for a in nodes_weights)
-        if (nodes.shape != (m_q,) or weights.shape != (m_q,)
-                or not np.isfinite(nodes).all() or not np.isfinite(weights).all()
-                or not ((nodes > 0) & (nodes < 1)).all() or not (weights > 0).all()
-                or not np.isclose(weights.sum(), 1, rtol=1e-12, atol=1e-14)):
-            raise ValueError("Expected a positive quadrature rule on (0, 1) with unit weight")
-        m, d = log_u.shape
-        multiplier = np.zeros(m) if log_multiplier is None else np.broadcast_to(
-            np.asarray(log_multiplier, dtype=np.float64), (m,)
-        )
-        if not np.isfinite(multiplier).all():
-            raise ValueError("log_multiplier must be finite")
-        result = np.zeros((m, d))
-        started = perf_counter()
-        last_progress = started
-        for row, delta in enumerate(log_u):
-            # log(abs(exp(delta)-1)), without exponentiating positive delta.
-            with np.errstate(divide="ignore"):
-                log_difference = np.maximum(delta, 0) + np.log(-np.expm1(-np.abs(delta)))
-            small = np.abs(delta).max(initial=0) < 30
-            if small:
-                K = np.expm1(delta)
-            for start in range(0, m_q, node_block_size):
-                if timeout_seconds is not None and perf_counter() - started > timeout_seconds:
-                    raise TimeoutError(f"Integration exceeded {timeout_seconds}s at game {row}, node {start}")
-                t = nodes[start:start + node_block_size, None]
-                if small:
-                    log_T = t * K[None, :]
-                    np.log1p(log_T, out=log_T)
-                else:
-                    log_T = np.logaddexp(np.log1p(-t), np.log(t) + delta[None, :])
-                log_product = log_T.sum(axis=1) + multiplier[row]
-                # Reuse the node-by-feature buffer for the weighted integrand.
-                np.negative(log_T, out=log_T)
-                log_T += log_product[:, None]
-                log_T += log_difference[None, :]
-                log_T += np.log(weights[start:start + len(t), None])
-                with np.errstate(over="raise", invalid="raise"):
-                    np.exp(log_T, out=log_T)
-                result[row] += log_T.sum(axis=0)
-                if progress_callback is not None:
-                    now = perf_counter()
-                    completed_nodes = start + len(t)
-                    if completed_nodes == m_q or now - last_progress >= 30:
-                        progress_callback(row, completed_nodes, m, m_q)
-                        last_progress = now
-            result[row] *= np.sign(delta)
-        if not np.isfinite(result).all():
-            raise FloatingPointError("Attribution is outside the float64 range")
-        return result
-
-    def phi_matrix_logspace(self, K: np.ndarray, m_q: int, eps: float = 1e-12) -> np.ndarray:
-        """Compute Phi (m,d) using log-space shared product.
-
-        This is memory-lean in the shared product, but still returns Phi (m,d).
+        Memory-lean in the shared product, but still returns Phi (m,d).  Factors
+        with magnitude below ``eps`` are clamped, so this routine is exact only
+        when no factor vanishes; use ``phi_matrix_prefix_scan`` otherwise.
         """
         K = np.asarray(K, dtype=np.float64)
         m, d = K.shape
+        Ut = _absent_factors_numpy(K, Ut)
+        Ut_b = np.broadcast_to(Ut, (m, d))
 
         x, w = _gauss_legendre_01_numpy(m_q, dtype=np.float64)
 
@@ -179,14 +150,14 @@ class ProductGamesShapleyNumpy:
         sign_P = np.ones((m_q, m), dtype=np.float64)
 
         for j in range(d):
-            t = 1.0 + np.outer(x, K[:, j])  # (m_q,m)
+            t = Ut_b[None, :, j] + np.outer(x, K[:, j])  # (m_q,m): (1-t) ut_j + t u_j
             sign_P *= np.sign(t)
             log_abs_P += np.log(np.maximum(np.abs(t), eps), dtype=np.float64)
 
         Qint = np.empty((m, d), dtype=np.float64)
         wa = w[:, None]
         for i in range(d):
-            denom = 1.0 + np.outer(x, K[:, i])  # (m_q,m)
+            denom = Ut_b[None, :, i] + np.outer(x, K[:, i])  # (m_q,m)
             integrand_sign = sign_P * np.sign(denom)
             integrand_log = log_abs_P - np.log(np.maximum(np.abs(denom), eps), dtype=np.float64)
             Qint[:, i] = (wa * (integrand_sign * np.exp(integrand_log))).sum(axis=0)
@@ -197,7 +168,7 @@ class ProductGamesShapleyNumpy:
 if JAX_AVAILABLE:
     class ProductGamesShapleyJax:
         """
-        Product-game Shapley factors in JAX.
+        Product-game Shapley factors in JAX (same contract as ``ProductGamesShapleyNumpy``).
 
         Returns Phi (m,d) in NumPy format.
         """
@@ -208,9 +179,9 @@ if JAX_AVAILABLE:
 
         @staticmethod
         @jax.jit
-        def _phi_prefix_core(K, x, w):
-            # K: (m, d)
-            B = 1.0 + x[:, None, None] * K[None, :, :]  # (m_q, m, d)
+        def _phi_prefix_core(K, Ut, x, w):
+            # K: (m, d) = u - ut;  Ut: (1, d) or (m, d) absent factors
+            B = Ut[None, :, :] + x[:, None, None] * K[None, :, :]  # (m_q, m, d)
             pref = lax.cumprod(B, axis=2)
             pref = jnp.concatenate(
                 [jnp.ones((B.shape[0], B.shape[1], 1), dtype=B.dtype), pref[:, :, :-1]], axis=2
@@ -223,8 +194,14 @@ if JAX_AVAILABLE:
             acc = (w[:, None, None] * Q).sum(axis=0)  # (m, d)
             return K * acc
 
-        def phi_matrix_prefix_scan(self, K: np.ndarray, m_q: int) -> np.ndarray:
+        def phi_matrix_prefix_scan(self, K: np.ndarray, m_q: int, Ut=None, node_block: int | None = None) -> np.ndarray:
+            """Same contract as the NumPy version; ``node_block`` bounds the ``(node_block, m, d)`` working set.
+
+            Every node block has the same shape (the last one is padded with zero-weight
+            nodes), so the jitted core compiles once per ``(node_block, m, d)``.
+            """
             K = np.asarray(K)
+            Ut = _absent_factors_numpy(K, Ut)
 
             x_np, w_np = np.polynomial.legendre.leggauss(m_q)
             x_np = 0.5 * (x_np + 1.0)
@@ -233,49 +210,58 @@ if JAX_AVAILABLE:
             dtype = _jax_work_dtype(K)
             if K.dtype != dtype:
                 K = K.astype(dtype, copy=False)
-            x = jnp.asarray(x_np, dtype=dtype)
-            w = jnp.asarray(w_np, dtype=dtype)
             Kj = jnp.asarray(K, dtype=dtype)
+            Utj = jnp.asarray(Ut, dtype=dtype)
 
-            out = self._phi_prefix_core(Kj, x, w)
+            nb = m_q if node_block is None else max(1, min(int(node_block), m_q))
+            out = None
+            for q0 in range(0, m_q, nb):
+                xb, wb = x_np[q0:q0 + nb], w_np[q0:q0 + nb]
+                if xb.shape[0] < nb:  # pad the last block: zero weights contribute nothing
+                    pad = nb - xb.shape[0]
+                    xb = np.concatenate([xb, np.full(pad, 0.5)]); wb = np.concatenate([wb, np.zeros(pad)])
+                blk = self._phi_prefix_core(Kj, Utj, jnp.asarray(xb, dtype=dtype), jnp.asarray(wb, dtype=dtype))
+                out = blk if out is None else out + blk
             return np.asarray(out)
 
         @staticmethod
         @jax.jit
-        def _phi_logspace_core(K, x, w, eps):
-            # K: (m, d)
+        def _phi_logspace_core(K, Ut, x, w, eps):
+            # K: (m, d) = u - ut;  Ut: (m, d) absent factors
             x = x[:, None]  # (m_q, 1)
             w = w[:, None]  # (m_q, 1)
             m, d = K.shape
 
-            def scan_step(carry, k_j):
-                # k_j: (m,) — column j of K
+            def scan_step(carry, cols):
+                # cols = (k_j, ut_j): column j of K and of Ut, each (m,)
+                k_j, ut_j = cols
                 log_abs_P, sign_P = carry
-                t = 1.0 + x * k_j[None, :]
+                t = ut_j[None, :] + x * k_j[None, :]  # (1-t) ut_j + t u_j
                 sign_P = sign_P * jnp.sign(t)
                 log_abs_P = log_abs_P + jnp.log(jnp.maximum(jnp.abs(t), eps))
                 return (log_abs_P, sign_P), None
 
-            # Scan over d columns of K
+            # Scan over d columns of K and Ut
             init = (
                 jnp.zeros((x.shape[0], m), K.dtype),
                 jnp.ones((x.shape[0], m), K.dtype),
             )
-            (log_abs_P, sign_P), _ = lax.scan(scan_step, init, K.T)  # scan over (d, m)
+            (log_abs_P, sign_P), _ = lax.scan(scan_step, init, (K.T, Ut.T))  # scan over (d, m)
 
-            def per_feature(k_i):
-                # k_i: (m,) — column i of K
-                denom = 1.0 + x * k_i[None, :]
+            def per_feature(k_i, ut_i):
+                # k_i, ut_i: (m,) — column i of K and of Ut
+                denom = ut_i[None, :] + x * k_i[None, :]
                 integrand_sign = sign_P * jnp.sign(denom)
                 integrand_log = log_abs_P - jnp.log(jnp.maximum(jnp.abs(denom), eps))
                 Qint = jnp.sum(w * (integrand_sign * jnp.exp(integrand_log)), axis=0)  # (m,)
                 return k_i * Qint  # (m,)
 
             # vmap over d columns, result (d, m), then transpose to (m, d)
-            return jax.vmap(per_feature, in_axes=0)(K.T).T
+            return jax.vmap(per_feature, in_axes=(0, 0))(K.T, Ut.T).T
 
-        def phi_matrix_logspace(self, K: np.ndarray, m_q: int, eps: float = 1e-100) -> np.ndarray:
+        def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-100) -> np.ndarray:
             K = np.asarray(K)
+            Ut = np.broadcast_to(_absent_factors_numpy(K, Ut), K.shape)
 
             x_np, w_np = np.polynomial.legendre.leggauss(m_q)
             x_np = 0.5 * (x_np + 1.0)
@@ -287,8 +273,9 @@ if JAX_AVAILABLE:
             x = jnp.asarray(x_np, dtype=dtype)
             w = jnp.asarray(w_np, dtype=dtype)
             Kj = jnp.asarray(K, dtype=dtype)
+            Utj = jnp.asarray(Ut, dtype=dtype)
 
-            out = self._phi_logspace_core(Kj, x, w, eps)
+            out = self._phi_logspace_core(Kj, Utj, x, w, eps)
             return np.asarray(out)
 else:
     class ProductGamesShapleyJax:
