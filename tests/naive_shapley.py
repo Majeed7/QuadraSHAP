@@ -48,3 +48,30 @@ def naive_shapley(a: Sequence[float]) -> np.ndarray:
                 phi[i] += w * (prod_S * (a[i] - 1.0))
 
     return phi
+
+
+def naive_shapley_absent(u: Sequence[float], ut: Sequence[float]) -> np.ndarray:
+    """Naive Shapley values of the product game with present factors ``u`` and absent factors ``ut``.
+
+        v(S) = prod_{j in S} u[j] * prod_{j not in S} ut[j]
+
+    ``ut = 1`` recovers :func:`naive_shapley` (the constant shift ``-1`` does not
+    affect Shapley values).  Exponential in ``d``; for tests only.
+    """
+    u = np.asarray(u, dtype=np.float64)
+    ut = np.asarray(ut, dtype=np.float64)
+    d = int(u.shape[0])
+    if d == 0:
+        return np.zeros((0,), dtype=np.float64)
+    fact = [math.factorial(i) for i in range(d + 1)]
+    phi = np.zeros(d, dtype=np.float64)
+    for i in range(d):
+        others = [p for p in range(d) if p != i]
+        for k in range(d):
+            wgt = fact[k] * fact[d - k - 1] / fact[d]
+            for S in itertools.combinations(others, k):
+                mask = np.zeros(d, dtype=bool)
+                mask[list(S)] = True
+                base = np.prod(np.where(mask, u, ut)[others])
+                phi[i] += wgt * (u[i] - ut[i]) * base
+    return phi

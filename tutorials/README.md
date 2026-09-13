@@ -6,7 +6,7 @@ fully reproducible examples:
 | Notebook | What it demonstrates |
 |---|---|
 | [`tree_models.ipynb`](tree_models.ipynb) | Exact path-dependent TreeSHAP for a scikit-learn decision tree, checked against exhaustive coalition enumeration |
-| [`kernel_methods.ipynb`](kernel_methods.ipynb) | Exact local Shapley values for an RBF `KernelRidge` model, checked against exhaustive product-game enumeration |
+| [`kernel_methods.ipynb`](kernel_methods.ipynb) | Local Shapley values for an RBF `KernelRidge` model with `RKHSExplainer`, checked against exhaustive product-game enumeration; the a priori node budget for a prescribed accuracy; the neutral-factor, baseline and empirical interventional value functions |
 
 Both notebooks:
 

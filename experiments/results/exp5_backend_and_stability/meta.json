@@ -1,0 +1,58 @@
+{
+  "experiment": "exp5_backend_and_stability",
+  "timestamp": "2026-09-12 19:43:14",
+  "environment": {
+    "python": "3.10.12",
+    "platform": "Linux-6.8.0-136-generic-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "processor": "aarch64",
+    "git": "3aac109",
+    "numpy": "2.2.6",
+    "scipy": "1.15.3",
+    "sklearn": "1.7.2",
+    "shap": null,
+    "jax": null,
+    "matplotlib": "3.10.9"
+  },
+  "grid": [
+    {
+      "d": 200,
+      "m_q": [
+        4,
+        16,
+        64,
+        100
+      ]
+    },
+    {
+      "d": 1000,
+      "m_q": [
+        4,
+        16,
+        64,
+        500
+      ]
+    },
+    {
+      "d": 5000,
+      "m_q": [
+        4,
+        16,
+        64
+      ]
+    }
+  ],
+  "n_games": 300,
+  "repeats": 3,
+  "n_stability": 32,
+  "m_q_stability": 16,
+  "stability_cases": [
+    "near one (wide kernel)",
+    "long products (narrow kernel)",
+    "underflowing shared product",
+    "mixed magnitudes (GLM)",
+    "vanishing factors",
+    "sign-changing factor"
+  ],
+  "elapsed_seconds": 16.681574466998427
+}

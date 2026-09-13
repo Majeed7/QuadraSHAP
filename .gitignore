@@ -87,3 +87,6 @@ Thumbs.db
 *.pyd
 *.dylib
 _skbuild/
+
+# experiment model cache (experiments/exp4)
+models/

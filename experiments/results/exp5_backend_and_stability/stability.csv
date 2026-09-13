@@ -1,0 +1,13 @@
+case,d,backend,log10_min_factor,log10_max_prefix,log10_min_prefix,log10_max_phi,zero_factors,rel_err,finite
+near one (wide kernel),1000,logspace_numpy,0,0,0,-2,0,4.601638860533231e-16,True
+near one (wide kernel),1000,prefix_scan_numpy,0,0,0,-2,0,6.677670098391454e-16,True
+long products (narrow kernel),1000,logspace_numpy,-2,0,-232,-3,0,4.31096343576272e-15,True
+long products (narrow kernel),1000,prefix_scan_numpy,-2,0,-232,-3,0,4.355757452515068e-15,True
+underflowing shared product,5000,logspace_numpy,-2,0,-1097,-6,0,3.0310145437156344e-14,True
+underflowing shared product,5000,prefix_scan_numpy,-2,0,-1097,-6,0,1.1939929804262955e-14,True
+mixed magnitudes (GLM),1000,logspace_numpy,-1,325,0,111,0,5.788786758238301e-13,True
+mixed magnitudes (GLM),1000,prefix_scan_numpy,-1,325,0,111,0,inf,False
+vanishing factors,1000,logspace_numpy,-18,0,-95,-95,0,2.682429827092925e+29,True
+vanishing factors,1000,prefix_scan_numpy,-18,0,-95,-95,0,5.027695189203978e-16,True
+sign-changing factor,1000,logspace_numpy,-1,0,-8,-6,160,0.15386232959464718,True
+sign-changing factor,1000,prefix_scan_numpy,-1,0,-8,-6,160,1.2694660864453754e-15,True
