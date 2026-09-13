@@ -1,0 +1,372 @@
+{
+  "datasets": {
+    "gse24080": {
+      "kind": "survival",
+      "n_source_profiles": 559,
+      "n_clinical_rows": 565,
+      "n_samples": 553,
+      "n_features": 54675,
+      "events": 168,
+      "efs_events": 245,
+      "time_unit": "months",
+      "endpoints": [
+        "OS",
+        "EFS"
+      ],
+      "excluded_profiles": 6,
+      "missing_values": 0,
+      "split_counts": {
+        "training": 339,
+        "validation": 214
+      },
+      "measurement": "Deposited MAS5 log2 intensity; probe sets retained without gene aggregation",
+      "notes": "June 2008 time/event columns, not 24-month classification labels",
+      "dataset": "gse24080",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/gse24080"
+    },
+    "motorimagery": {
+      "kind": "classification_time_series",
+      "n_train": 278,
+      "n_test": 100,
+      "channels": 64,
+      "time_points": 3000,
+      "n_features_flat": 192000,
+      "axis_order": [
+        "trial",
+        "channel",
+        "time"
+      ],
+      "sampling_hz": 1000,
+      "subjects": 1,
+      "split": "Official split: two recording sessions about one week apart",
+      "dataset": "motorimagery",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/motorimagery"
+    },
+    "tcga_hnsc": {
+      "kind": "survival",
+      "n_samples": 443,
+      "n_features": 97536,
+      "events": 152,
+      "published_total_columns": 97539,
+      "time_unit": "days",
+      "endpoints": [
+        "OS"
+      ],
+      "openml_ids": [
+        42285,
+        42286
+      ],
+      "part_alignment": "Provider-defined row position; compare IDs wherever supplied",
+      "upstream_preprocessing": "Published Herrmann et al. data, including upstream clinical encoding/filtering",
+      "missing_values": 0,
+      "dataset": "tcga_hnsc",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/tcga_hnsc"
+    },
+    "tcga_laml": {
+      "kind": "survival",
+      "n_samples": 35,
+      "n_features": 90159,
+      "events": 14,
+      "published_total_columns": 90162,
+      "time_unit": "days",
+      "endpoints": [
+        "OS"
+      ],
+      "openml_ids": [
+        42291,
+        42292
+      ],
+      "part_alignment": "Provider-defined row position; compare IDs wherever supplied",
+      "upstream_preprocessing": "Published Herrmann et al. data, including upstream clinical encoding/filtering",
+      "missing_values": 0,
+      "dataset": "tcga_laml",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/tcga_laml"
+    },
+    "tcga_lgg_methylation": {
+      "kind": "survival",
+      "n_source_profiles": 530,
+      "n_samples": 511,
+      "n_source_features": 485577,
+      "n_features": 396065,
+      "events": 125,
+      "time_unit": "days",
+      "endpoints": [
+        "OS",
+        "DSS",
+        "DFI",
+        "PFI"
+      ],
+      "default_endpoint": "OS",
+      "missing_values": 165596,
+      "excluded_all_missing_features": 89512,
+      "source_missing_values": 45906228,
+      "excluded_profiles": 19,
+      "measurement": "methylation beta value, not Cox coefficient beta",
+      "notes": "Primary tumors only; alternate endpoints need their own valid-duration mask",
+      "dataset": "tcga_lgg_methylation",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/tcga_lgg_methylation"
+    },
+    "tcga_lgg_multiomics": {
+      "kind": "survival",
+      "n_samples": 419,
+      "n_features": 90151,
+      "events": 77,
+      "published_total_columns": 90154,
+      "time_unit": "days",
+      "endpoints": [
+        "OS"
+      ],
+      "openml_ids": [
+        42293,
+        42294
+      ],
+      "part_alignment": "Provider-defined row position; compare IDs wherever supplied",
+      "upstream_preprocessing": "Published Herrmann et al. data, including upstream clinical encoding/filtering",
+      "missing_values": 0,
+      "dataset": "tcga_lgg_multiomics",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/tcga_lgg_multiomics"
+    },
+    "tcga_lusc": {
+      "kind": "survival",
+      "n_samples": 418,
+      "n_features": 100892,
+      "events": 132,
+      "published_total_columns": 100895,
+      "time_unit": "days",
+      "endpoints": [
+        "OS"
+      ],
+      "openml_ids": [
+        42299,
+        42300
+      ],
+      "part_alignment": "Provider-defined row position; compare IDs wherever supplied",
+      "upstream_preprocessing": "Published Herrmann et al. data, including upstream clinical encoding/filtering",
+      "missing_values": 0,
+      "dataset": "tcga_lusc",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/tcga_lusc"
+    },
+    "xjtu_sy": {
+      "kind": "run_to_failure_time_series",
+      "n_bearings": 15,
+      "n_windows": 9216,
+      "channels": 2,
+      "time_points": 32768,
+      "n_features_flat": 65536,
+      "axis_order": [
+        "window",
+        "time",
+        "channel"
+      ],
+      "sampling_hz": 25600,
+      "measurement_interval_minutes": 1,
+      "window_seconds": 1.28,
+      "target": "Minutes to final recorded window: last window has zero remaining time",
+      "notes": "No imposed censoring or official split. Split by bearing; windows are repeated measurements, not independent failures.",
+      "dataset": "xjtu_sy",
+      "dtype": "float32",
+      "preprocessing": "No fitted imputation, scaling, or feature selection",
+      "folder": "processed/xjtu_sy"
+    }
+  },
+  "source_files": [
+    {
+      "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE24nnn/GSE24080/suppl/GSE24080_MM_UAMS565_ClinInfo_27Jun2008_LS_clean.xls.gz",
+      "path": "raw/gse24080/clinical.xls.gz",
+      "bytes": 107655,
+      "sha256": "9cd7b43e848d2db3a1851c41c7c03a14a17eb459b900bcdd702d9e9347ca1bd1",
+      "recorded_utc": "2026-09-13T08:31:38.036274+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE24nnn/GSE24080/matrix/GSE24080_series_matrix.txt.gz",
+      "path": "raw/gse24080/series_matrix.txt.gz",
+      "bytes": 84205493,
+      "sha256": "208a24a0d4a01df3002df807cbeb11108a5bac4e1f889539a7c937686a4981db",
+      "recorded_utc": "2026-09-13T08:31:38.033567+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.timeseriesclassification.com/aeon-toolkit/MotorImagery.zip",
+      "path": "raw/motorimagery/MotorImagery.zip",
+      "bytes": 77798017,
+      "sha256": "13061e6c1de3f04c4239e65dcabe9422e99f3e4acac5150c68226bcb3c9b3fc2",
+      "recorded_utc": "2026-09-13T08:31:38.025396+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799794/HNSC-Part1.arff",
+      "path": "raw/openml/42285.arff",
+      "bytes": 159047204,
+      "sha256": "076aaeec1ef8bb6c0a2c510438dcc7f9bd381f92cb2ed393895e2dc024b3ab3b",
+      "recorded_utc": "2026-09-13T08:27:19.408349+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42285",
+      "path": "raw/openml/42285.json",
+      "bytes": 1019,
+      "sha256": "039435f2102e57ea1efbd6ec69eb0aadc727158eb54ada450511ce01761f74ab",
+      "recorded_utc": "2026-09-13T08:25:06.797869+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799795/HNSC-Part2.arff",
+      "path": "raw/openml/42286.arff",
+      "bytes": 218689520,
+      "sha256": "cfbc37ae1ce6957df598f12f91a02a256db8e4e03c9845bfced5c2364ed7d97a",
+      "recorded_utc": "2026-09-13T08:29:21.861596+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42286",
+      "path": "raw/openml/42286.json",
+      "bytes": 958,
+      "sha256": "5b4f0f52a7ba62b834d2a19dc32651f172acee12f29eca3a6dee9472f3bfb8cb",
+      "recorded_utc": "2026-09-13T08:27:20.465643+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799800/LAML-Part1.arff",
+      "path": "raw/openml/42291.arff",
+      "bytes": 13256532,
+      "sha256": "8635840c6a6c3899365dc5894aee28c4f9ba31284d2e61f825ffd09b12150a8e",
+      "recorded_utc": "2026-09-13T08:29:18.757408+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42291",
+      "path": "raw/openml/42291.json",
+      "bytes": 1019,
+      "sha256": "67e22bed73d5b00c0a8d71d67aba4848a2f23939b366131b53b93ed301e67316",
+      "recorded_utc": "2026-09-13T08:25:07.740421+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799801/LAML-Part2.arff",
+      "path": "raw/openml/42292.arff",
+      "bytes": 23643201,
+      "sha256": "e2bfaa6ca9a501cb577f243a424e63d5232dc02dbd75a8fa0aa97b7495c1b0fc",
+      "recorded_utc": "2026-09-13T08:29:32.331584+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42292",
+      "path": "raw/openml/42292.json",
+      "bytes": 958,
+      "sha256": "272ca073951b22003b21ad598b784423e8dd3d2e83551832590fee9bfc9ad3e2",
+      "recorded_utc": "2026-09-13T08:29:20.058974+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799802/LGG-Part1.arff",
+      "path": "raw/openml/42293.arff",
+      "bytes": 136165942,
+      "sha256": "7938e71d7c8aa711975a889101c0cb781330ca490a530872c3c7a7770b086f5b",
+      "recorded_utc": "2026-09-13T08:27:03.324640+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42293",
+      "path": "raw/openml/42293.json",
+      "bytes": 1016,
+      "sha256": "4e0c76b1cb2bceff82a1197aeb1ce2b23de95b9802fa1a60d4e802081bb01cc9",
+      "recorded_utc": "2026-09-13T08:25:07.745822+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799803/LGG-Part2.arff",
+      "path": "raw/openml/42294.arff",
+      "bytes": 214656620,
+      "sha256": "d23ffaa575d19ed8d5924860b434c26e39bd217ba67d4e8eae159ab30a3f37ae",
+      "recorded_utc": "2026-09-13T08:29:04.802936+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42294",
+      "path": "raw/openml/42294.json",
+      "bytes": 955,
+      "sha256": "133f5d8ed24d7dc6894a8b14261e7d0a39b1f12ece2e7f6693e472ef054ac429",
+      "recorded_utc": "2026-09-13T08:27:04.510030+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799808/LUSC-Part1.arff",
+      "path": "raw/openml/42299.arff",
+      "bytes": 155392349,
+      "sha256": "6e34caa5c4d8ed43ead0cc658602726940c2b937c7a0c90150b7ba401fe71966",
+      "recorded_utc": "2026-09-13T08:27:12.902024+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42299",
+      "path": "raw/openml/42299.json",
+      "bytes": 1019,
+      "sha256": "651eb6e7758a69a49b550718aa6fc3910b2f09042b2c6dec2bafff7af3092206",
+      "recorded_utc": "2026-09-13T08:25:06.798176+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://openml.org/data/v1/download/21799809/LUSC-Part2.arff",
+      "path": "raw/openml/42300.arff",
+      "bytes": 217968335,
+      "sha256": "c1c4dfa2cf7db95fda2d5b93a2e22504acd8bf1bed29209a7444d5de792e19cb",
+      "recorded_utc": "2026-09-13T08:29:20.551047+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://www.openml.org/api/v1/json/data/42300",
+      "path": "raw/openml/42300.json",
+      "bytes": 958,
+      "sha256": "8e54c3c5f60a19505041f01e620e2adff1e59604399922c5d27c3245c31a2a5d",
+      "recorded_utc": "2026-09-13T08:27:14.223280+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://api.gdc.cancer.gov/data/1b5f413e-a8d1-4d10-92eb-7c4ae739ed81",
+      "path": "raw/tcga_lgg_methylation/TCGA-CDR-SupplementalTableS1.xlsx",
+      "bytes": 2945129,
+      "sha256": "ea594c0fbb6731477c7ac511fab449ca9c38b0d42d269591ed9f5c4090e75a5a",
+      "recorded_utc": "2026-09-13T08:31:38.286284+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://tcga-xena-hub.s3.us-east-1.amazonaws.com/download/TCGA.LGG.sampleMap%2FHumanMethylation450.json",
+      "path": "raw/tcga_lgg_methylation/methylation.json",
+      "bytes": 2843,
+      "sha256": "c1cfe343312ceb83d970b12d45eb00af477004cc1de976be01e4f8b93dba7c3d",
+      "recorded_utc": "2026-09-13T08:31:38.026183+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://tcga-xena-hub.s3.us-east-1.amazonaws.com/download/TCGA.LGG.sampleMap%2FHumanMethylation450.gz",
+      "path": "raw/tcga_lgg_methylation/methylation.tsv.gz",
+      "bytes": 463256289,
+      "sha256": "e582907ff45baf990bfa3727e435bddf5d97efdce0485c8653d0b229983aa8d4",
+      "recorded_utc": "2026-09-13T08:31:38.281267+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    },
+    {
+      "url": "https://kr0k0tsch.de/rul-datasets/XJTU-SY.zip",
+      "path": "raw/xjtu_sy/XJTU-SY.zip",
+      "bytes": 5448862369,
+      "sha256": "da655de4331e4f3784ffca285a4fa0278a46e9485818860670395f96fb18977e",
+      "recorded_utc": "2026-09-13T08:33:56.393732+00:00",
+      "checksum_kind": "locally computed; not an upstream authenticity signature"
+    }
+  ]
+}

@@ -1,0 +1,411 @@
+{
+  "validated_utc": "2026-09-13T08:37:29.667191+00:00",
+  "raw_files_verified": 23,
+  "datasets": {
+    "gse24080": {
+      "shape": [
+        553,
+        54675
+      ],
+      "missing_values": 0,
+      "endpoints": {
+        "OS": {
+          "n": 553,
+          "events": 168
+        },
+        "EFS": {
+          "n": 553,
+          "events": 245
+        }
+      },
+      "source_comparison": "128 source features matched by ID for first/middle/last retained patient"
+    },
+    "motorimagery": {
+      "splits": {
+        "train": {
+          "shape": [
+            278,
+            64,
+            3000
+          ],
+          "class_counts": {
+            "finger": 139,
+            "tongue": 139
+          }
+        },
+        "test": {
+          "shape": [
+            100,
+            64,
+            3000
+          ],
+          "class_counts": {
+            "tongue": 50,
+            "finger": 50
+          }
+        }
+      },
+      "source_comparison": "First trial, three channels, and label in both official splits"
+    },
+    "tcga_hnsc": {
+      "shape": [
+        443,
+        97536
+      ],
+      "missing_values": 0,
+      "endpoints": {
+        "OS": {
+          "n": 443,
+          "events": 152
+        }
+      },
+      "source_comparison": "First raw row of both parts, feature names, and available patient ID"
+    },
+    "tcga_laml": {
+      "shape": [
+        35,
+        90159
+      ],
+      "missing_values": 0,
+      "endpoints": {
+        "OS": {
+          "n": 35,
+          "events": 14
+        }
+      },
+      "source_comparison": "First raw row of both parts, feature names, and available patient ID"
+    },
+    "tcga_lgg_methylation": {
+      "shape": [
+        511,
+        396065
+      ],
+      "missing_values": 165596,
+      "endpoints": {
+        "OS": {
+          "n": 511,
+          "events": 125
+        },
+        "DSS": {
+          "n": 503,
+          "events": 113
+        },
+        "DFI": {
+          "n": 132,
+          "events": 20
+        },
+        "PFI": {
+          "n": 511,
+          "events": 192
+        }
+      },
+      "source_comparison": "104 source features matched by ID for first/middle/last retained patient"
+    },
+    "tcga_lgg_multiomics": {
+      "shape": [
+        419,
+        90151
+      ],
+      "missing_values": 0,
+      "endpoints": {
+        "OS": {
+          "n": 419,
+          "events": 77
+        }
+      },
+      "source_comparison": "First raw row of both parts, feature names, and available patient ID"
+    },
+    "tcga_lusc": {
+      "shape": [
+        418,
+        100892
+      ],
+      "missing_values": 0,
+      "endpoints": {
+        "OS": {
+          "n": 418,
+          "events": 132
+        }
+      },
+      "source_comparison": "First raw row of both parts, feature names, and available patient ID"
+    },
+    "xjtu_sy": {
+      "n_bearings": 15,
+      "n_windows": 9216,
+      "landmark_shape": [
+        15,
+        65536
+      ],
+      "source_comparison": "First and final recording of every bearing; consecutive indices and remaining-time order"
+    }
+  },
+  "prepared_files": [
+    {
+      "path": "processed/gse24080/X.npy",
+      "bytes": 120941228,
+      "sha256": "4bfdec1e164de96370e3aeaac3066992e61e4951b6f0ed05048eacaec5505d05"
+    },
+    {
+      "path": "processed/gse24080/clinical_covariates.tsv",
+      "bytes": 41787,
+      "sha256": "ba187b41a32adf765e6507b251fcf6615c047736bda26c792d1515e2fb858461"
+    },
+    {
+      "path": "processed/gse24080/excluded_samples.tsv",
+      "bytes": 508,
+      "sha256": "db72c5141d28658538c2773d70c9a7625c1a4c21d2789e860556eabf2ee3e4e9"
+    },
+    {
+      "path": "processed/gse24080/features.tsv",
+      "bytes": 1520722,
+      "sha256": "58f753950c1edbf473c1aefe71ffc336b8dc3519318a1dee6d88349688b963e8"
+    },
+    {
+      "path": "processed/gse24080/metadata.json",
+      "bytes": 640,
+      "sha256": "796dde91043b9e25b3efea32d97962f430b69f16df1dabd886885922f8ce4dd2"
+    },
+    {
+      "path": "processed/gse24080/samples.tsv",
+      "bytes": 34138,
+      "sha256": "4b7d3c3495d7605b8ee25c0493433cb87955b7c6a78a1032d3487210385c975f"
+    },
+    {
+      "path": "processed/motorimagery/X_test.npy",
+      "bytes": 76800128,
+      "sha256": "80ac6728a0c585914f8dd80ba0f980fed33df817f50f5ceebf14a55cb1aca456"
+    },
+    {
+      "path": "processed/motorimagery/X_train.npy",
+      "bytes": 213504128,
+      "sha256": "62b1b927e141826481b002455ba7fbffa93649fc36dd18134e310f8dcfe90a5a"
+    },
+    {
+      "path": "processed/motorimagery/metadata.json",
+      "bytes": 449,
+      "sha256": "abbec0fda2e7b961ad324b2d53d3c7f14cd75b6cd7fa9e1fa65b6c2fbd201716"
+    },
+    {
+      "path": "processed/motorimagery/samples_test.tsv",
+      "bytes": 3735,
+      "sha256": "d2e8f2f812871f9e78582f1644a208ccd4bdc24aebcd55ba2f94f4143ee73552"
+    },
+    {
+      "path": "processed/motorimagery/samples_train.tsv",
+      "bytes": 10877,
+      "sha256": "6485127b4330900f39894e90f16e052ba4003cd0c6611a6b943a00b43e605204"
+    },
+    {
+      "path": "processed/motorimagery/source_description.txt",
+      "bytes": 2833,
+      "sha256": "2462b054ea4367ce00e351c05cf473b764b74426b50d2dd4c37ae3c6a869b9e5"
+    },
+    {
+      "path": "processed/tcga_hnsc/X.npy",
+      "bytes": 172833920,
+      "sha256": "efeef9332349b338a640f94288b34d5180fddde840a878e4d4ca5765c67ae2c8"
+    },
+    {
+      "path": "processed/tcga_hnsc/features.tsv",
+      "bytes": 2352040,
+      "sha256": "2b0e545c36a918997efab8f1561dc83f509d795f543eb4eedb0036c00eb86577"
+    },
+    {
+      "path": "processed/tcga_hnsc/metadata.json",
+      "bytes": 558,
+      "sha256": "9ee6b854838ab1fcd2199871f4c59e6d06fbaba51c6e2ec264178d3204fefd7e"
+    },
+    {
+      "path": "processed/tcga_hnsc/samples.tsv",
+      "bytes": 15141,
+      "sha256": "a9567de7c9c067cf3afc9682306b6d92b31728dbd0f8a9a7bf041998beb2da36"
+    },
+    {
+      "path": "processed/tcga_laml/X.npy",
+      "bytes": 12622388,
+      "sha256": "48522230f5dc13a3511d6083eeba4cc25d59eebfc8cc5808c33634b1b5eb4765"
+    },
+    {
+      "path": "processed/tcga_laml/features.tsv",
+      "bytes": 2165987,
+      "sha256": "9229f2e94d39eec4b06b4b4e331532c928d07c15fe47b534bf46cd4ea54986ab"
+    },
+    {
+      "path": "processed/tcga_laml/metadata.json",
+      "bytes": 556,
+      "sha256": "e8d7d9adf958f9880d28e058bb1c3307390ff38a0f02480b8d00c0bd6adc297e"
+    },
+    {
+      "path": "processed/tcga_laml/samples.tsv",
+      "bytes": 1229,
+      "sha256": "0e80e139a8f7b8a2c71f3aa522421abb6292176f964bf4e27428c9f7009b9a34"
+    },
+    {
+      "path": "processed/tcga_lgg_methylation/X.npy",
+      "bytes": 809556988,
+      "sha256": "77becda8e156e0de696d3c20d0d06bdd6733d849812add64093cb278096d9858"
+    },
+    {
+      "path": "processed/tcga_lgg_methylation/clinical_covariates.tsv",
+      "bytes": 21754,
+      "sha256": "191815945c19e0b5e23ffcfbf5013d387ebc7e9348a66e4c0d59cc0f78d1471c"
+    },
+    {
+      "path": "processed/tcga_lgg_methylation/excluded_features.tsv",
+      "bytes": 5286792,
+      "sha256": "7fbb906a915d9553b24b73a8220cae0ef2eab5fea6efd49e914367824481b32f"
+    },
+    {
+      "path": "processed/tcga_lgg_methylation/excluded_samples.tsv",
+      "bytes": 1544,
+      "sha256": "5acbe2ace125491ca4f38d88e7c4fab9a66848fc648fab700e966b4412dc7b8e"
+    },
+    {
+      "path": "processed/tcga_lgg_methylation/features.tsv",
+      "bytes": 9115516,
+      "sha256": "7e81be96ddf7976722d3c1e397390910b03fdb697b4e542fa4213a651880b759"
+    },
+    {
+      "path": "processed/tcga_lgg_methylation/metadata.json",
+      "bytes": 686,
+      "sha256": "5a4c7947c8508dc91f0cb1f62245c9e7d3fa153fd9791f854c92fea4cf0add93"
+    },
+    {
+      "path": "processed/tcga_lgg_methylation/samples.tsv",
+      "bytes": 32549,
+      "sha256": "b344bbbc8fc1e75c8f70c3d272e50ebd603adbf4112b8c5394a4ce05b398b6f9"
+    },
+    {
+      "path": "processed/tcga_lgg_multiomics/X.npy",
+      "bytes": 151093204,
+      "sha256": "4d6f2af9b2b2970d3a7330b5aad872d9473c159b04499508793084e1898341f4"
+    },
+    {
+      "path": "processed/tcga_lgg_multiomics/features.tsv",
+      "bytes": 2169078,
+      "sha256": "1b5ced66d0264a5971bd406ddf3f7e09803ef6cb546590a85752e5c52747e0dc"
+    },
+    {
+      "path": "processed/tcga_lgg_multiomics/metadata.json",
+      "bytes": 567,
+      "sha256": "f5c2b7b0ef3fee0fc9067766efefe791cfdb0458fa75cca663f2f2b2603a918b"
+    },
+    {
+      "path": "processed/tcga_lgg_multiomics/samples.tsv",
+      "bytes": 14294,
+      "sha256": "3ea93aa025c1d98b17db59bda2e6ceef5c9536957aebb3fee845f1562225f5d3"
+    },
+    {
+      "path": "processed/tcga_lusc/X.npy",
+      "bytes": 168691552,
+      "sha256": "e55132600c32eb269968ad49bb7ae0b548c35092e0cc64dc0158f550808e46e3"
+    },
+    {
+      "path": "processed/tcga_lusc/features.tsv",
+      "bytes": 2434262,
+      "sha256": "72000d3fc63844faaa394cb41e2fda3e4cd9ba5020204c097dd2b919a72220c9"
+    },
+    {
+      "path": "processed/tcga_lusc/metadata.json",
+      "bytes": 560,
+      "sha256": "44ca0fa3e3a26f5d3d230a5ed7c106d9d750d60a1770fde7acadc740aca59d76"
+    },
+    {
+      "path": "processed/tcga_lusc/samples.tsv",
+      "bytes": 14195,
+      "sha256": "8da833cc9cef03cdd1347888c12d0e7a6baaa6987d8e9095a860e09c82803dd3"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing1_1.npy",
+      "bytes": 32243840,
+      "sha256": "b5ed4b98cf2fec963be78d5d6430cfa100cac6b3f73094ee362cdff17ecbd130"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing1_2.npy",
+      "bytes": 42205312,
+      "sha256": "51161d32eb5dfce0738c3e211bb3948e559995a0516deaf1a8b69205682ee2d1"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing1_3.npy",
+      "bytes": 41418880,
+      "sha256": "5f5336d9df3822876f4b798d5775742625e90e62e38fcd280b66dbb5390875ca"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing1_4.npy",
+      "bytes": 31981696,
+      "sha256": "4f189f2be256c7e531b268ed6e62fbaffc07455afb9ee87b9bdde690e9c8efd1"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing1_5.npy",
+      "bytes": 13631616,
+      "sha256": "e1947b0c21d10ed5f2e839f854058e8685ab01ccc1e2206e8834f48cf88c7be1"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing2_1.npy",
+      "bytes": 128712832,
+      "sha256": "37c68cdf9dfa7ab191634c83b17f709ee972b8393d7da3c54943838c541e0a66"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing2_2.npy",
+      "bytes": 42205312,
+      "sha256": "658b66e4a0e5145a8ef9be1e6a9695db3e645e150fb7b14d1525d317493543da"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing2_3.npy",
+      "bytes": 139722880,
+      "sha256": "8f7c29a6fb834ff4642e234a14628485f317e53cb8293845fa2d17ded45b536e"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing2_4.npy",
+      "bytes": 11010176,
+      "sha256": "3fd181e8d8e43e3bdad52356dccc37b88a238fde0a587bc8e443909a77298b7b"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing2_5.npy",
+      "bytes": 88866944,
+      "sha256": "de577696e2f6c123d81e7d0962f9b8590d3a25cf005381fc08aea1547f19a88f"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing3_1.npy",
+      "bytes": 665321600,
+      "sha256": "349019bf017d76684135ac80715b778b12876435a627d61d9ab5bd9d5233d54a"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing3_2.npy",
+      "bytes": 654311552,
+      "sha256": "0f9f6f9cf4c42a47761f3ffbbcd18a31589bbd296054a2cde2651675e5e9e771"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing3_3.npy",
+      "bytes": 97255552,
+      "sha256": "d01dfee29937e138efa4080a8ca9a981cd3d6b668c18cf1fd27a4676d7e6b031"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing3_4.npy",
+      "bytes": 397148288,
+      "sha256": "f1fd107fe634a11179e652481caf2b00c85af528521ab2bb9640a1fe0d62c32a"
+    },
+    {
+      "path": "processed/xjtu_sy/Bearing3_5.npy",
+      "bytes": 29884544,
+      "sha256": "ae45eeeea8e36c0a8a0cee742d0aa4cf884ee4d52dd38bc9a6468d8be1028630"
+    },
+    {
+      "path": "processed/xjtu_sy/metadata.json",
+      "bytes": 641,
+      "sha256": "748cace83627ce63538aec0e5039c2e383607b742f77e8d97188c21c9c47e2b5"
+    },
+    {
+      "path": "processed/xjtu_sy/windows.tsv",
+      "bytes": 573482,
+      "sha256": "f58d6f0adadf0829c64c6ca620c8a8c4c5d48db79fc63c92d3d5dd46665d796a"
+    }
+  ],
+  "preprocessing_smoke_check": {
+    "dataset": "tcga_laml",
+    "training_rows": 24,
+    "held_out_rows": 11,
+    "retained_features": 90020,
+    "finite_held_out_output": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "workflow_seconds": 109.61113029099988,
+  "datasets": [
+    {
+      "dataset": "gse24080",
+      "n_train": 339,
+      "d_active": 54675,
+      "preprocessing_seconds": 1.2079045830000723,
+      "fit_seconds": 0.5283582920001209,
+      "validation_c_index": 0.6570533733524729,
+      "sufficient_exact_nodes": 27338,
+      "mq_8_seconds": 0.014172167000197078,
+      "mq_8_relative_l2_error": 8.657404315411644e-13,
+      "mq_16_seconds": 0.02729483400025856,
+      "mq_16_relative_l2_error": 8.649048922535143e-13,
+      "mq_32_seconds": 0.04833954200012158,
+      "mq_32_relative_l2_error": 8.640558479808181e-13,
+      "mq_128_seconds": 0.17816029100004016,
+      "mq_128_relative_l2_error": 8.685081239187594e-13,
+      "error_reference": "exact",
+      "exact_total_seconds": 48.63370454200003
+    },
+    {
+      "dataset": "tcga_lgg_methylation",
+      "n_train": 383,
+      "d_active": 396065,
+      "preprocessing_seconds": 10.733212957999967,
+      "fit_seconds": 1.1736214580000706,
+      "validation_c_index": 0.8537906137184116,
+      "sufficient_exact_nodes": 198033,
+      "mq_8_seconds": 0.12194637499987948,
+      "mq_8_relative_l2_error": 2.4156159642575616e-11,
+      "mq_16_seconds": 0.1965301250002085,
+      "mq_16_relative_l2_error": 9.78996374638159e-15,
+      "mq_32_seconds": 0.37213275000021895,
+      "mq_32_relative_l2_error": 1.2546817898131114e-14,
+      "mq_128_seconds": 1.375420750000103,
+      "mq_128_relative_l2_error": 0.0,
+      "error_reference": "128-node approximation",
+      "exact_total_seconds": null
+    }
+  ],
+  "approximate_repeats": 3,
+  "exact_repeats": 1,
+  "background_size": 4,
+  "explained_patients_per_cohort": 3
+}

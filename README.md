@@ -26,10 +26,11 @@ This repository provides the official implementation accompanying the paper:
 
 [//]: # (```)
 
-QuadraSHAP reformulates Shapley-value computation for product games as a Gauss-Legendre quadrature problem, yielding estimates that are both numerically stable and scalable to high-dimensional settings. The library covers two concrete application domains:
+QuadraSHAP reformulates Shapley-value computation for product games as a Gauss-Legendre quadrature problem, yielding estimates that are both numerically stable and scalable to high-dimensional settings. The library covers three concrete application domains:
 
 - **`TreeExplainer`**: TreeSHAP-style explanations for scikit-learn tree models, with interchangeable numerical backends.
 - **Product-kernel explainers**: local Shapley values for models whose prediction function factorizes across features, such as RBF kernel methods.
+- **`CoxPHExplainer`**: relative-hazard explanations for fitted Cox models, using whole empirical background rows and memory-bounded quadrature.
 
 The repository is organized as a research artifact: library code lives under `src/`, correctness tests under `tests/`, and benchmark scripts with precomputed outputs under `benchmarks/`.
 
@@ -135,9 +136,33 @@ print(phi.shape)          # (5,)
 
 **Supported kernel backends (`method`):** `logspace_numpy`, `logspace_jax`, `prefix_scan_numpy`, `prefix_scan_jax`.
 
+### Cox relative hazard
+
+To explain a fitted Cox model on its multiplicative output scale, provide its
+coefficient vector and processed training-background rows. Use the same feature
+order and preprocessing as the fitted model:
+
+```python
+from quadrashap import CoxPHExplainer
+
+explainer = CoxPHExplainer(model.coef_, X_train[:4])
+explanation = explainer.explain(X_test[0], m_q=16)
+print(explanation.values)
+print(explanation.base_value, explanation.prediction)
+# m_q=None uses the sufficient exact rule, ceil(nonzero_coefficients / 2).
+```
+
+This attributes `exp(x @ model.coef_)` using whole empirical background rows.
+The positive-factor backend evaluates the product in logarithms and processes
+blocks of nodes to bound memory. SciPy supplies the quadrature rule. See the
+[executed Cox notebook](tutorials/cox_survival.ipynb) for model fitting,
+training-only preprocessing, measured runtimes, and exact-versus-approximate
+comparisons. Install its dependencies with
+`uv pip install --python .venv/bin/python -r benchmarks/requirements-cox.txt`.
+
 ## Tutorials
 
-The [`tutorials/`](tutorials/) directory contains two executable Jupyter
+The [`tutorials/`](tutorials/) directory contains executable Jupyter
 notebooks that derive the method from the paper, connect the mathematics to
 the implementation, and include naive exact baselines, correctness checks,
 quadrature-convergence examples, and measured timing comparisons:
@@ -146,6 +171,12 @@ quadrature-convergence examples, and measured timing comparisons:
   for a scikit-learn decision tree versus exhaustive coalition enumeration.
 - [Product-kernel tutorial](tutorials/kernel_methods.ipynb) — local Shapley
   values for RBF Kernel Ridge versus exhaustive product-game enumeration.
+- [Cox survival experiment](tutorials/cox_survival.ipynb) — dense ridge Cox
+  models on myeloma and glioma data, with measured approximate attribution and
+  a full exact calculation on the myeloma model.
+- [Full exact glioma follow-up](tutorials/cox_survival_exact_glioma.ipynb) —
+  the 198,033-node exact calculation on the saved 396,065-feature model, using
+  the same explained patient and background as the approximations.
 
 See the [tutorial guide](tutorials/README.md) for installation and launch
 instructions.

@@ -1,0 +1,13 @@
+{
+  "base_value": 53.328749268211055,
+  "prediction": 7.495140402231639,
+  "m_q": 27338,
+  "exact_nodes": 27338,
+  "active_features": 54675,
+  "rule_seconds": 10.14691000000039,
+  "integration_seconds": 38.48528412499991,
+  "total_seconds": 48.63370454200003,
+  "patient": 0,
+  "repeats": 1,
+  "reference": "Algebraically exact Gauss-Legendre rule, float64"
+}
