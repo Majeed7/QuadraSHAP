@@ -1,0 +1,10 @@
+{
+  "wall_seconds": 30.290721625002334,
+  "cases": 4,
+  "recorded_calls": 16,
+  "full_exact_rerun": false,
+  "GPU": [
+    "METAL:0"
+  ],
+  "all_attributions_finite": true
+}

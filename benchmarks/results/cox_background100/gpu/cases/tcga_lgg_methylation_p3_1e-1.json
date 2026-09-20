@@ -1,0 +1,22 @@
+{
+  "dataset": "tcga_lgg_methylation",
+  "patient": 3,
+  "patient_id": "TCGA-DH-A66G",
+  "B": 100,
+  "d": 396065,
+  "mode": "1e-1",
+  "eps": 0.1,
+  "m_q": 38,
+  "seconds": 1.027335666003637,
+  "warmup_seconds": 0.8002829579927493,
+  "bound": 0.03351477823364281,
+  "budget_seconds": 0.44541995800682344,
+  "core_dtype": "float32",
+  "memory_budget": "8GB",
+  "block_size": 1,
+  "node_block": 38,
+  "checkpoint_io_seconds": 0.0,
+  "attempts": 1,
+  "attribution_file": "attributions/tcga_lgg_methylation_p3_1e-1.npy",
+  "attribution_sha256": "c79db0901f2e39ab0e738036330d960e9c6c25aed3e5a038ecc106d52bab9c2f"
+}

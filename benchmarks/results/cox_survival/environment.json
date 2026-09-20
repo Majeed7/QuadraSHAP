@@ -1,0 +1,24 @@
+{
+  "utc": "2026-09-13T08:47:48.178925+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.13.15",
+  "packages": {
+    "numpy": "2.5.2",
+    "scipy": "1.18.1",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "scikit-survival": "0.28.0",
+    "matplotlib": "3.11.2"
+  },
+  "threadpool_info": [
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 4,
+      "prefix": "libomp",
+      "filepath": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/.venv/lib/python3.13/site-packages/sklearn/.dylibs/libomp.dylib",
+      "version": null
+    }
+  ],
+  "requested_blas_threads": 4
+}

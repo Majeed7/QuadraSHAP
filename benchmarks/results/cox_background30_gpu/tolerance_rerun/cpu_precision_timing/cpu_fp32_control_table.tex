@@ -1,0 +1,30 @@
+% Requires \usepackage{booktabs}.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrr}
+\toprule
+Dataset & $\varepsilon$ & CPU FP32 time (s) & $\Delta_{\mathrm{CPU32}}$ & Pass
+& CPU32--GPU32 gap \\
+\midrule
+GSE24080 & $10^{-1}$ & $0.143\pm0.091$ & $1.99\times10^{-3}$ & 5/5 & $1.79\times10^{-4}$ \\
+GSE24080 & $10^{-2}$ & $0.103\pm0.006$ & $2.15\times10^{-3}$ & 5/5 & $9.78\times10^{-5}$ \\
+GSE24080 & $10^{-3}$ & $0.102\pm0.004$ & $2.15\times10^{-3}$ & 1/5 & $9.90\times10^{-5}$ \\
+\midrule
+TCGA LGG & $10^{-1}$ & $0.619\pm0.033$ & $3.06\times10^{-2}$ & 5/5 & $2.62\times10^{-4}$ \\
+TCGA LGG & $10^{-2}$ & $0.629\pm0.043$ & $3.56\times10^{-2}$ & 3/5 & $7.17\times10^{-4}$ \\
+TCGA LGG & $10^{-3}$ & $0.643\pm0.048$ & $3.98\times10^{-2}$ & 0/5 & $6.52\times10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\caption{Additional CPU FP32 control using the same patients, backgrounds,
+node counts, formula, and timing protocol. The CPU32--GPU32 gap is the largest
+absolute difference between their attribution outputs across patients and
+features. $\Delta_{\mathrm{CPU32}}$ instead compares CPU FP32 with the same
+independent FP64 reference used in Table~\ref{tab:cox-cpu-gpu-precision}.
+Comparing CPU FP32 and CPU FP64 holds the device and formula fixed while
+changing work precision; comparing CPU FP32 and GPU FP32 also exposes
+backend-dependent numerical effects. Both FP32 configurations use FP64
+host accumulation.}
+\label{tab:cox-cpu-precision-control}
+\end{table}

@@ -1,0 +1,22 @@
+{
+  "dataset": "gse24080",
+  "patient": 0,
+  "patient_id": "16574",
+  "B": 100,
+  "d": 54675,
+  "mode": "exact",
+  "eps": null,
+  "m_q": 27338,
+  "seconds": 227.86303066604887,
+  "warmup_seconds": 0.5942198340198956,
+  "bound": 0.0,
+  "budget_seconds": 0.0,
+  "core_dtype": "float64",
+  "memory_budget": "8GB",
+  "block_size": 1,
+  "node_block": 3926,
+  "checkpoint_io_seconds": 0.009843416977673769,
+  "attempts": 1,
+  "attribution_file": "attributions/gse24080_p0_exact.npy",
+  "attribution_sha256": "be7b036bb8f9fc0a9507d5acc24cbfcd534d95e298b8ceb95faacb462f82cabd"
+}

@@ -1,0 +1,42 @@
+\subsection{High-dimensional experiments with QuadraSHAP}
+\label{sec:cox-high-dimensional-main}
+
+To assess whether Shapley explanations remain practical when the number of
+features greatly exceeds the sample size, we consider two genomic survival
+datasets: GSE24080 multiple-myeloma gene expression
+\cite{geo_gse24080}, with $n=553$ patients and $d=54{,}675$ expression
+probe sets, and TCGA lower-grade glioma DNA methylation
+\cite{tcga_lgg_methylation}, with $n=511$ and $d=396{,}065$ methylation
+sites. Such small-$n$, large-$d$ settings arise naturally when genome-wide
+assays measure tens to hundreds of thousands of molecular variables per patient, but survival
+follow-up is available for only hundreds of patients. We fit Cox models
+with coefficient shrinkage and explain their relative hazard,
+$f(x)=\exp(\beta^\top x)=\prod_j\exp(\beta_jx_j)$, whose product
+structure makes QuadraSHAP directly applicable. Using 30 fixed training
+backgrounds, we explain five distinct held-out patients per dataset on an
+Apple M4 Pro GPU with JAX-Metal in single precision (FP32).
+Table~\ref{tab:cox-high-dimensional} compares degree-exact quadrature,
+which integrates the underlying polynomial exactly in real arithmetic,
+with node counts selected to certify absolute quadrature tolerances
+$\varepsilon\in\{10^{-1},10^{-2},10^{-3}\}$.
+The reused, matched exact-degree baseline remains manageable: 27,338 and 198,033
+nodes require 1.17\,s and 66.38\,s per patient on average, respectively.
+Across the three tolerances, approximation reduces latency to 85--90\,ms
+and 310--320\,ms, supporting interactive, on-demand explanations.
+At $\varepsilon=10^{-1}$, this corresponds to speedups of
+$13.1\times$ and $207.1\times$. Timings include node selection and
+transfers but exclude warm-up and cached
+quadrature-rule construction; constructing the exact rules previously
+took 10.97\,s and 561.92\,s, whereas approximate rules require less
+than 1\,ms. Every selected rule satisfies its analytical error bound,
+but this certificate excludes floating-point error. Against an independent
+high-accuracy reference, all GPU explanations meet $10^{-1}$; at
+$10^{-2}$, all five GSE24080 patients and three of five TCGA patients
+pass, while $10^{-3}$ is exceeded in both datasets. Separate
+double-precision (FP64) CPU evaluations at the same nodes satisfy all
+30 requested tolerances, with a worst discrepancy of
+$1.59\times10^{-10}$. Thus, the experiments demonstrate subsecond GPU
+attribution in extremely high dimensions, while identifying numerical
+precision as a separate limitation when tighter absolute accuracy is
+required. Appendix~\ref{app:cox-high-dimensional} provides the full
+protocol and precision checks.

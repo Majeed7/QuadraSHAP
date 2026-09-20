@@ -21,6 +21,8 @@ the product game of Definition 1, ``v(S) = prod_{j in S} u_j``.  Fixing
 and averaging over background rows gives the empirical interventional value
 function (Section 4 of the paper); both are handled by the callers.
 """
+from functools import lru_cache
+
 import numpy as np
 
 # Optional JAX support
@@ -34,14 +36,26 @@ except Exception:
     JAX_AVAILABLE = False
 
 
+@lru_cache(maxsize=16)
 def _gauss_legendre_01_numpy(m_q: int, dtype=np.float64):
     """
     Gauss–Legendre nodes/weights mapped from [-1,1] to [0,1].
     """
-    x, w = np.polynomial.legendre.leggauss(m_q)
+    if not isinstance(m_q, (int, np.integer)) or m_q < 1:
+        raise ValueError("m_q must be a positive integer")
+    if m_q <= 256:
+        x, w = np.polynomial.legendre.leggauss(m_q)
+    else:
+        # NumPy's dense companion matrix is prohibitive at genomics-scale d/2.
+        # SciPy's tridiagonal construction uses linear working memory instead.
+        from scipy.special import roots_legendre
+        x, w = roots_legendre(m_q)
     x = 0.5 * (x + 1.0)
     w = 0.5 * w
-    return x.astype(dtype, copy=False), w.astype(dtype, copy=False)
+    x, w = x.astype(dtype, copy=False), w.astype(dtype, copy=False)
+    x.setflags(write=False)
+    w.setflags(write=False)
+    return x, w
 
 
 def _absent_factors_numpy(K: np.ndarray, Ut):
@@ -132,6 +146,81 @@ class ProductGamesShapleyNumpy:
             acc += (w[q0:q0 + nb, None, None] * pref).sum(axis=0)
         return K * acc
 
+    def phi_matrix_positive_logspace(
+        self, log_factors: np.ndarray, m_q: int, *, log_multiplier=None,
+        node_block_size: int = 64, nodes_weights=None, timeout_seconds=None,
+        progress_callback=None,
+    ) -> np.ndarray:
+        """Evaluate positive product games from logarithmic factors in bounded memory.
+
+        Rows encode ``v(S) = exp(log_multiplier + sum(log_factors[S]))``.
+        Supplying logarithms avoids overflowing the individual positive factors,
+        while node blocking bounds the temporary array to ``node_block_size * d``.
+        ``timeout_seconds`` bounds integration time, excluding rule construction.
+        """
+        from time import perf_counter
+
+        log_u = np.asarray(log_factors, dtype=np.float64)
+        if log_u.ndim != 2 or not np.isfinite(log_u).all():
+            raise ValueError("log_factors must be a finite (games, features) matrix")
+        if not isinstance(m_q, (int, np.integer)) or m_q < 1:
+            raise ValueError("m_q must be a positive integer")
+        if not isinstance(node_block_size, (int, np.integer)) or node_block_size < 1:
+            raise ValueError("node_block_size must be a positive integer")
+        if timeout_seconds is not None and timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        if nodes_weights is None:
+            nodes, weights = _gauss_legendre_01_numpy(m_q)
+        else:
+            nodes, weights = (np.asarray(value, dtype=np.float64) for value in nodes_weights)
+        if (nodes.shape != (m_q,) or weights.shape != (m_q,)
+                or not np.isfinite(nodes).all() or not np.isfinite(weights).all()
+                or not ((nodes > 0) & (nodes < 1)).all() or not (weights > 0).all()
+                or not np.isclose(weights.sum(), 1, rtol=1e-12, atol=1e-14)):
+            raise ValueError("Expected a positive quadrature rule on (0, 1) with unit weight")
+        games, features = log_u.shape
+        multiplier = np.zeros(games) if log_multiplier is None else np.broadcast_to(
+            np.asarray(log_multiplier, dtype=np.float64), (games,)
+        )
+        if not np.isfinite(multiplier).all():
+            raise ValueError("log_multiplier must be finite")
+        result = np.zeros((games, features))
+        started = perf_counter()
+        last_progress = started
+        for row, delta in enumerate(log_u):
+            with np.errstate(divide="ignore"):
+                log_difference = np.maximum(delta, 0) + np.log(-np.expm1(-np.abs(delta)))
+            use_direct_factors = np.abs(delta).max(initial=0) < 30
+            if use_direct_factors:
+                differences = np.expm1(delta)
+            for start in range(0, m_q, node_block_size):
+                if timeout_seconds is not None and perf_counter() - started > timeout_seconds:
+                    raise TimeoutError(f"Integration exceeded {timeout_seconds}s at game {row}, node {start}")
+                node = nodes[start:start + node_block_size, None]
+                if use_direct_factors:
+                    log_terms = node * differences[None, :]
+                    np.log1p(log_terms, out=log_terms)
+                else:
+                    log_terms = np.logaddexp(np.log1p(-node), np.log(node) + delta[None, :])
+                log_product = log_terms.sum(axis=1) + multiplier[row]
+                np.negative(log_terms, out=log_terms)
+                log_terms += log_product[:, None]
+                log_terms += log_difference[None, :]
+                log_terms += np.log(weights[start:start + len(node), None])
+                with np.errstate(over="raise", invalid="raise"):
+                    np.exp(log_terms, out=log_terms)
+                result[row] += log_terms.sum(axis=0)
+                if progress_callback is not None:
+                    now = perf_counter()
+                    completed_nodes = start + len(node)
+                    if completed_nodes == m_q or now - last_progress >= 30:
+                        progress_callback(row, completed_nodes, games, m_q)
+                        last_progress = now
+            result[row] *= np.sign(delta)
+        if not np.isfinite(result).all():
+            raise FloatingPointError("Attribution is outside the float64 range")
+        return result
+
     def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-12) -> np.ndarray:
         """Compute Phi (m,d) using the log-space shared product.
 
@@ -203,9 +292,7 @@ if JAX_AVAILABLE:
             K = np.asarray(K)
             Ut = _absent_factors_numpy(K, Ut)
 
-            x_np, w_np = np.polynomial.legendre.leggauss(m_q)
-            x_np = 0.5 * (x_np + 1.0)
-            w_np = 0.5 * w_np
+            x_np, w_np = _gauss_legendre_01_numpy(m_q)
 
             dtype = _jax_work_dtype(K)
             if K.dtype != dtype:
@@ -223,6 +310,20 @@ if JAX_AVAILABLE:
                 blk = self._phi_prefix_core(Kj, Utj, jnp.asarray(xb, dtype=dtype), jnp.asarray(wb, dtype=dtype))
                 out = blk if out is None else out + blk
             return np.asarray(out)
+
+        @staticmethod
+        @jax.jit
+        def _phi_logspace_parallel_core(K, Ut, x, w, eps):
+            # Reduce independent features in parallel on the accelerator. A
+            # sequential lax.scan over hundreds of thousands of features can
+            # exceed Metal's command-buffer execution limit.
+            factors = Ut[None, :, :] + x[:, None, None] * K[None, :, :]
+            signs = jnp.sign(factors)
+            logs = jnp.log(jnp.maximum(jnp.abs(factors), eps))
+            log_product = logs.sum(axis=2, keepdims=True)
+            sign_product = signs.prod(axis=2, keepdims=True)
+            leave_one_out = sign_product * signs * jnp.exp(log_product - logs)
+            return K * (w[:, None, None] * leave_one_out).sum(axis=0)
 
         @staticmethod
         @jax.jit
@@ -259,24 +360,33 @@ if JAX_AVAILABLE:
             # vmap over d columns, result (d, m), then transpose to (m, d)
             return jax.vmap(per_feature, in_axes=(0, 0))(K.T, Ut.T).T
 
-        def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-100) -> np.ndarray:
+        def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-100,
+                                node_block: int | None = None) -> np.ndarray:
             K = np.asarray(K)
             Ut = np.broadcast_to(_absent_factors_numpy(K, Ut), K.shape)
 
-            x_np, w_np = np.polynomial.legendre.leggauss(m_q)
-            x_np = 0.5 * (x_np + 1.0)
-            w_np = 0.5 * w_np
+            x_np, w_np = _gauss_legendre_01_numpy(m_q)
 
             dtype = _jax_work_dtype(K)
             if K.dtype != dtype:
                 K = K.astype(dtype, copy=False)
-            x = jnp.asarray(x_np, dtype=dtype)
-            w = jnp.asarray(w_np, dtype=dtype)
             Kj = jnp.asarray(K, dtype=dtype)
             Utj = jnp.asarray(Ut, dtype=dtype)
-
-            out = self._phi_logspace_core(Kj, Utj, x, w, eps)
-            return np.asarray(out)
+            nb = m_q if node_block is None else max(1, min(int(node_block), m_q))
+            core = (self._phi_logspace_core if jax.default_backend().lower() == "cpu"
+                    else self._phi_logspace_parallel_core)
+            # GPU arithmetic remains float32 on Metal. Accumulate node blocks
+            # in host float64 to avoid another rounding drift in very long rules.
+            out = np.zeros(K.shape, dtype=np.float64)
+            for q0 in range(0, m_q, nb):
+                xb, wb = x_np[q0:q0 + nb], w_np[q0:q0 + nb]
+                if xb.shape[0] < nb:
+                    pad = nb - xb.shape[0]
+                    xb = np.concatenate([xb, np.full(pad, 0.5)])
+                    wb = np.concatenate([wb, np.zeros(pad)])
+                blk = core(Kj, Utj, jnp.asarray(xb, dtype=dtype), jnp.asarray(wb, dtype=dtype), eps)
+                out += np.asarray(blk)
+            return out
 else:
     class ProductGamesShapleyJax:
         def __init__(self):

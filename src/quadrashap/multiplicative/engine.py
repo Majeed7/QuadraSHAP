@@ -295,7 +295,8 @@ class QuadraSHAP:
                 K, Ut, w = pad_block(K, Ut, w, plan.block_size)  # one shape -> one compilation
             has_zero = bool((K + (1.0 if Ut is None else Ut) == 0).any() or (Ut is not None and (Ut == 0).any()))
             fn, is_scan = self._phi_fn(backend, has_zero)
-            Phi = fn(K, m_q, Ut=Ut, node_block=plan.node_block) if is_scan else fn(K, m_q, Ut=Ut)
+            supports_node_block = is_scan or backend.endswith("_jax")
+            Phi = fn(K, m_q, Ut=Ut, node_block=plan.node_block) if supports_node_block else fn(K, m_q, Ut=Ut)
             phi += (Phi * w[:, None]).sum(axis=0)
         if report is not None:
             # a posteriori necessary check: sum_i phi_i must equal f(x) - v(empty) (exactly so at the exactness threshold)
@@ -308,5 +309,4 @@ class QuadraSHAP:
         """Explain each row of ``X`` (``(n, d)`` -> ``(n, d)``); keyword arguments as in :meth:`explain`."""
         X = np.atleast_2d(np.asarray(X, dtype=np.float64))
         return np.stack([self.explain(row, **kwargs) for row in X], axis=0)
-
 

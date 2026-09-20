@@ -1,0 +1,64 @@
+{
+  "gse24080": {
+    "n_train": 339,
+    "d": 54675,
+    "background_size": 30,
+    "selection_seed": 42,
+    "selection": "First 30 entries of the saved seed-42 permutation of training rows, without replacement",
+    "patient_ids": [
+      "16574",
+      "16570",
+      "16518",
+      "16600",
+      "9995"
+    ],
+    "test_rows": [
+      42,
+      44,
+      45,
+      46,
+      47
+    ],
+    "patient_selection": "First five held-out rows of the saved split, without outcome-dependent selection",
+    "timed_calls_per_patient_method": 1,
+    "warmup": "One untimed explicit-node explanation per distinct (dataset, node count), before its first measured call",
+    "model_refitted": false,
+    "model_sha256": "49cdc857a7984d7d8b44af9266587ecde58eed713110fa0d46064e623c9019bd",
+    "source_sha256": {
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/inputs.npz": "d21c465e7d8b9d69fde6a649cb53b1349a1e21928c7f4f19bb58a0b1d587af7f",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/training_background.npy": "ab7f71060131fb3bd744f1a74a5e4afa846f92ec224c29d04a7f54b84d262832"
+    },
+    "prepared_inputs_sha256": "a80eb70b1029bb1d25b3d337b9df20314beaef95519f44387a4fb7cc261f2f3f"
+  },
+  "tcga_lgg_methylation": {
+    "n_train": 383,
+    "d": 396065,
+    "background_size": 30,
+    "selection_seed": 42,
+    "selection": "First 30 entries of the saved seed-42 permutation of training rows, without replacement",
+    "patient_ids": [
+      "TCGA-CS-6665",
+      "TCGA-DU-A5TS",
+      "TCGA-HT-8113",
+      "TCGA-DH-A66G",
+      "TCGA-E1-A7YE"
+    ],
+    "test_rows": [
+      2,
+      9,
+      17,
+      18,
+      24
+    ],
+    "patient_selection": "First five held-out rows of the saved split, without outcome-dependent selection",
+    "timed_calls_per_patient_method": 1,
+    "warmup": "One untimed explicit-node explanation per distinct (dataset, node count), before its first measured call",
+    "model_refitted": false,
+    "model_sha256": "78e49f60b47ec388b0d56afd24e95bb529e63e20869d2220cc07de3d014fc035",
+    "source_sha256": {
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/inputs.npz": "ce572983d011386ddb3bf3b2d746318700b8362c7431e148bb90eb3ce771bf99",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/training_background.npy": "43fbc85eab1d06112361fd97ced5bd4b5b08a313beea84599f91a0bfc21dcc01"
+    },
+    "prepared_inputs_sha256": "ec2918087848fd19b8b65c3ce223278d6dead648291923c6ccb9c67ef102dc56"
+  }
+}

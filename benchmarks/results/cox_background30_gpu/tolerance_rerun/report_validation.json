@@ -1,0 +1,6 @@
+{
+  "report_data_validation": "30 GPU cases, 30 FP64 diagnostics, and 10 matched reused exact cases passed; attribution errors recomputed from arrays",
+  "latex_build": "latexmk exit 0; idempotent rebuild; final log has no warnings or unresolved references",
+  "pdf_visual_review": "3 pages reviewed; no clipping or overlapping content",
+  "pdf": "output/pdf/cox_tolerance_rerun.pdf"
+}

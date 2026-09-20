@@ -1,0 +1,254 @@
+[
+  {
+    "dataset": "gse24080",
+    "background_size": 100,
+    "m_q": 32,
+    "repeat": 0,
+    "seconds": 0.43565516699891305,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 32,
+      "d": 54675,
+      "block_size": 32,
+      "node_block": 6,
+      "n_blocks": 4,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 503889408,
+      "full_peak_bytes": 7260916800,
+      "mode": "blocked"
+    },
+    "phi_norm": 52075.502089336966
+  },
+  {
+    "dataset": "gse24080",
+    "background_size": 100,
+    "m_q": 32,
+    "repeat": 1,
+    "seconds": 0.1268889169987233,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 32,
+      "d": 54675,
+      "block_size": 32,
+      "node_block": 6,
+      "n_blocks": 4,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 503889408,
+      "full_peak_bytes": 7260916800,
+      "mode": "blocked"
+    },
+    "phi_norm": 52075.502089336966
+  },
+  {
+    "dataset": "gse24080",
+    "background_size": 100,
+    "m_q": 128,
+    "repeat": 0,
+    "seconds": 0.5203647919988725,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 128,
+      "d": 54675,
+      "block_size": 32,
+      "node_block": 6,
+      "n_blocks": 4,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 503889408,
+      "full_peak_bytes": 28256347200,
+      "mode": "blocked"
+    },
+    "phi_norm": 52075.52940680805
+  },
+  {
+    "dataset": "gse24080",
+    "background_size": 100,
+    "m_q": 128,
+    "repeat": 1,
+    "seconds": 0.3651253749994794,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 128,
+      "d": 54675,
+      "block_size": 32,
+      "node_block": 6,
+      "n_blocks": 4,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 503889408,
+      "full_peak_bytes": 28256347200,
+      "mode": "blocked"
+    },
+    "phi_norm": 52075.52940680805
+  },
+  {
+    "dataset": "gse24080",
+    "background_size": 100,
+    "m_q": 1024,
+    "repeat": 0,
+    "seconds": 3.3318697909999173,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 1024,
+      "d": 54675,
+      "block_size": 32,
+      "node_block": 6,
+      "n_blocks": 4,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 503889408,
+      "full_peak_bytes": 224213697600,
+      "mode": "blocked"
+    },
+    "phi_norm": 52075.48001850333
+  },
+  {
+    "dataset": "gse24080",
+    "background_size": 100,
+    "m_q": 1024,
+    "repeat": 1,
+    "seconds": 2.5600831660012773,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 1024,
+      "d": 54675,
+      "block_size": 32,
+      "node_block": 6,
+      "n_blocks": 4,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 503889408,
+      "full_peak_bytes": 224213697600,
+      "mode": "blocked"
+    },
+    "phi_norm": 52075.48001850333
+  },
+  {
+    "dataset": "tcga_lgg_methylation",
+    "background_size": 100,
+    "m_q": 32,
+    "repeat": 0,
+    "seconds": 1.3561259160014743,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 32,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 32,
+      "n_blocks": 100,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 525975088,
+      "full_peak_bytes": 52597508800,
+      "mode": "blocked"
+    },
+    "phi_norm": 6655.794696265031
+  },
+  {
+    "dataset": "tcga_lgg_methylation",
+    "background_size": 100,
+    "m_q": 32,
+    "repeat": 1,
+    "seconds": 0.8246342499987804,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 32,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 32,
+      "n_blocks": 100,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 525975088,
+      "full_peak_bytes": 52597508800,
+      "mode": "blocked"
+    },
+    "phi_norm": 6655.794696265031
+  },
+  {
+    "dataset": "tcga_lgg_methylation",
+    "background_size": 100,
+    "m_q": 128,
+    "repeat": 0,
+    "seconds": 2.2570275830003084,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 128,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 32,
+      "n_blocks": 100,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 525975088,
+      "full_peak_bytes": 204686699200,
+      "mode": "blocked"
+    },
+    "phi_norm": 6655.819150741208
+  },
+  {
+    "dataset": "tcga_lgg_methylation",
+    "background_size": 100,
+    "m_q": 128,
+    "repeat": 1,
+    "seconds": 2.1984490409995487,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 128,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 32,
+      "n_blocks": 100,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 525975088,
+      "full_peak_bytes": 204686699200,
+      "mode": "blocked"
+    },
+    "phi_norm": 6655.819150741208
+  },
+  {
+    "dataset": "tcga_lgg_methylation",
+    "background_size": 100,
+    "m_q": 1024,
+    "repeat": 0,
+    "seconds": 16.887450665999495,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 32,
+      "n_blocks": 100,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 525975088,
+      "full_peak_bytes": 1624185809600,
+      "mode": "blocked"
+    },
+    "phi_norm": 6655.806643270708
+  },
+  {
+    "dataset": "tcga_lgg_methylation",
+    "background_size": 100,
+    "m_q": 1024,
+    "repeat": 1,
+    "seconds": 17.29021004199967,
+    "block_plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 100,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 32,
+      "n_blocks": 100,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 525975088,
+      "full_peak_bytes": 1624185809600,
+      "mode": "blocked"
+    },
+    "phi_norm": 6655.806643270708
+  }
+]

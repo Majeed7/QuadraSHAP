@@ -1,0 +1,9 @@
+{
+  "phase": "complete",
+  "precision": "fp32",
+  "cases": 30,
+  "measured_calls": 30,
+  "completed_calls": 51,
+  "all_within_tolerance": false,
+  "wall_seconds": 22.47752629200113
+}

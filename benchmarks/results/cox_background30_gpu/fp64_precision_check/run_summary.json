@@ -1,0 +1,7 @@
+{
+  "phase": "complete",
+  "cases": 10,
+  "all_within_tolerance": true,
+  "wall_seconds": 6.3621317080105655,
+  "scope": "Ten 1e-6 CPU FP64 calls with the GPU parallel formula; no GPU FP64 timing or full-degree FP64 rerun"
+}

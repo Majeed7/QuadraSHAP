@@ -1,0 +1,54 @@
+{
+  "manifest": {
+    "dataset": "tcga_lgg_methylation",
+    "patient": 0,
+    "patient_id": "TCGA-CS-6665",
+    "d": 396065,
+    "B": 30,
+    "m_q": 198033,
+    "core_dtype": "float64",
+    "backend": "cpu",
+    "memory_budget": "8GB",
+    "block_size": 1,
+    "packages": {
+      "jax": "0.4.34",
+      "jaxlib": "0.4.34",
+      "numpy": "1.26.4",
+      "scipy": "1.17.1",
+      "pandas": "3.0.5",
+      "scikit-survival": "0.26.0",
+      "jax-metal": "0.1.1"
+    },
+    "source_sha256": {
+      "src/quadrashap/product_games/shapley.py": "d2a9c2fe3eaf8c74f1febd190115fdd78f3c698b3a3bdb03278914404b200736",
+      "src/quadrashap/product_games/blocks.py": "e363268f5ab10e251ce5e07374cd79660029e0d9935c77d9f3dfe0a30ff81884",
+      "src/quadrashap/multiplicative/engine.py": "24a60d0b9afb1389b5a8678ad0a9e13f8151aa35fb9c1ef79728eec381a9aa1d",
+      "src/quadrashap/multiplicative/glm.py": "ec77e7d21240cd99b80f59b3e2ec172498ef0fb8ccfef7ee35e252d55032adb9"
+    },
+    "integration_driver_sha256": "6e5411e28dd42905c34770b99c916a488a094137a054ce86ed5ff72348323e4a",
+    "input_sha256": "ec2918087848fd19b8b65c3ce223278d6dead648291923c6ccb9c67ef102dc56",
+    "rule_sha256": "42abcb8ddc38af1a000d5746f66ed229d3ba6a17fb2c806643c36b5fa8ae6b5e"
+  },
+  "generation": 122,
+  "attempts": 1,
+  "block": 30,
+  "next_node": 0,
+  "integration_compute_seconds": 3677.3703141610313,
+  "checkpoint_io_seconds": 0.256988749926677,
+  "phase": "complete",
+  "completed_fraction": 1.0,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 30,
+    "m_q": 198033,
+    "d": 396065,
+    "block_size": 1,
+    "node_block": 541,
+    "n_blocks": 30,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 8589870704,
+    "full_peak_bytes": 94121441091360,
+    "mode": "fixed"
+  },
+  "active_integration_wall_seconds": 3677.627302910958
+}

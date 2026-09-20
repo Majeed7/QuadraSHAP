@@ -50,3 +50,24 @@ jupyter lab tutorials/
 The tree notebook automatically uses the native C++ quadrature backend when
 it is installed. Otherwise it uses the pure-Python implementation. The kernel
 notebook uses the NumPy log-space backend, so neither notebook requires a GPU.
+
+## High-dimensional survival benchmarks
+
+Start with the [Cox reproducibility guide](../benchmarks/COX_REPRODUCIBILITY.md).
+It gives the public dataset URLs and an ordered fetch, preparation, validation,
+CPU, and optional Apple-GPU workflow. The large matrices are generated locally
+and are intentionally not stored in Git.
+
+[`cox_background_sensitivity.ipynb`](cox_background_sensitivity.ipynb) explains
+the saved Cox models using every training patient as the background: 339 for
+GSE24080 and 383 for TCGA LGG methylation. It runs a JAX-Metal tolerance and
+timing sweep, checks numerical error against independent float64 references,
+and displays a separate background-sensitivity study. The
+[experiment report](../benchmarks/results/cox_background_sensitivity/README.md)
+documents data preparation, reference construction and the Metal environment.
+The notebook requires the locally prepared survival data and saved model files.
+
+The historical [`cox_gpu_tolerance.ipynb`](cox_gpu_tolerance.ipynb) used four
+background patients, while [`cox_survival.ipynb`](cox_survival.ipynb) records the
+original CPU experiments. Their results describe different backgrounds and
+should not be substituted for the full-background timings or references.

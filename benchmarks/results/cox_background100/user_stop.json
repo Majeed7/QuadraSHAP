@@ -1,0 +1,8 @@
+{
+  "requested_at_utc": "2026-09-20T06:58:19.190790+00:00",
+  "reason": "User requested all jobs stop now",
+  "benchmark_processes_running": false,
+  "automation_status": "PAUSED",
+  "saved_results_and_checkpoints_preserved": true,
+  "email_delivery_on_hold": true
+}

@@ -1,0 +1,49 @@
+% Requires \usepackage{amsmath,booktabs,graphicx}.
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrrrrrr}
+\toprule
+ & & & & \multicolumn{3}{c}{GPU FP32} & \multicolumn{3}{c}{CPU FP64} \\
+\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+Dataset & $\varepsilon$ & Nodes & $C_{\max}$ & Time (s) & $\Delta_{\mathrm{GPU}}$ & Pass
+& Time (s) & $\Delta_{\mathrm{CPU}}$ & Pass \\
+\midrule
+GSE24080 & Exact degree & 27,338 & $0$ & $1.172\pm0.035$ & $0$ & --- & $69.277\pm2.833$ & $0$ & --- \\
+ & $10^{-1}$ & 44--53 & $7.69\times10^{-2}$ & $0.090\pm0.020$ & $3.40\times10^{-4}$ & 5/5 & $0.156\pm0.013$ & $2.36\times10^{-9}$ & 5/5 \\
+ & $10^{-2}$ & 45--54 & $7.09\times10^{-3}$ & $0.085\pm0.007$ & $3.71\times10^{-4}$ & 5/5 & $0.164\pm0.012$ & $2.36\times10^{-9}$ & 5/5 \\
+ & $10^{-3}$ & 46--54 & $8.82\times10^{-4}$ & $0.086\pm0.006$ & $1.31\times10^{-3}$ & 4/5 & $0.162\pm0.010$ & $2.36\times10^{-9}$ & 5/5 \\
+\midrule
+TCGA LGG & Exact degree & 198,033 & $0$ & $66.377\pm1.196$ & $0$ & --- & $3656.562\pm12.642$ & $0$ & --- \\
+ & $10^{-1}$ & 37--49 & $7.01\times10^{-2}$ & $0.320\pm0.028$ & $4.47\times10^{-3}$ & 5/5 & $0.992\pm0.076$ & $2.44\times10^{-7}$ & 5/5 \\
+ & $10^{-2}$ & 38--50 & $6.51\times10^{-3}$ & $0.312\pm0.006$ & $3.80\times10^{-3}$ & 5/5 & $1.009\pm0.097$ & $2.44\times10^{-7}$ & 5/5 \\
+ & $10^{-3}$ & 39--51 & $5.80\times10^{-4}$ & $0.310\pm0.011$ & $5.95\times10^{-3}$ & 2/5 & $1.035\pm0.100$ & $2.44\times10^{-7}$ & 5/5 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Cox explanations with 30 fixed training-background samples and five
+distinct held-out patients per cohort on an Apple M4 Pro. Times are mean
+$\pm$ sample standard deviation across patients, with one synchronized
+measurement per patient and method. $C_{\max}$ is the largest analytical
+absolute quadrature-error bound across patients.
+$\Delta_{\mathrm{GPU}}$ is the largest absolute feature-wise difference
+from the matching GPU FP32 degree-exact output;
+$\Delta_{\mathrm{CPU}}$ uses the matching CPU FP64 degree-exact output.
+Both maxima range over all five patients and features. Pass counts
+patients whose difference from their same-backend reference is at most
+$\varepsilon$. Exact-row differences are zero by construction, not evidence
+of zero floating-point error. CPU degree-exact measurements are new;
+GPU results and CPU approximate measurements reuse the matched saved runs.
+Warm-up and quadrature-rule construction are excluded; approximate API
+times include automatic node selection. Previously measured exact-rule
+construction required 10.97\,s for GSE24080 and 561.92\,s for TCGA;
+approximate-rule construction required 0.386--0.563\,ms.
+CPU exact timings measure active
+checkpointed integration with the same factor/block order as the public
+API, excluding checkpoint I/O and preliminary kernel-shape pilot calls.
+The certificate excludes rounding,
+and agreement with a rounded reference is not an absolute numerical guarantee.}
+\label{tab:cox-device-exact}
+\end{table*}

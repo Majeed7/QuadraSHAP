@@ -1,0 +1,37 @@
+% Requires \usepackage{booktabs}.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrc}
+\toprule
+Dataset & Method & Nodes & GPU time (s) & $C_{\max}$ & $\Delta_{\mathrm{GPU}}$ & Pass \\
+\midrule
+GSE24080 & Exact degree & 27,338 & $1.172\pm0.035$ & $0$ & --- & --- \\
+ & $\varepsilon=10^{-1}$ & 44--53 & $0.090\pm0.020$ & $7.69\times10^{-2}$ & $3.40\times10^{-4}$ & 5/5 \\
+ & $\varepsilon=10^{-2}$ & 45--54 & $0.085\pm0.007$ & $7.09\times10^{-3}$ & $3.71\times10^{-4}$ & 5/5 \\
+ & $\varepsilon=10^{-3}$ & 46--54 & $0.086\pm0.006$ & $8.82\times10^{-4}$ & $1.31\times10^{-3}$ & 4/5 \\
+\midrule
+TCGA LGG & Exact degree & 198,033 & $66.377\pm1.196$ & $0$ & --- & --- \\
+ & $\varepsilon=10^{-1}$ & 37--49 & $0.320\pm0.028$ & $7.01\times10^{-2}$ & $4.47\times10^{-3}$ & 5/5 \\
+ & $\varepsilon=10^{-2}$ & 38--50 & $0.312\pm0.006$ & $6.51\times10^{-3}$ & $3.80\times10^{-3}$ & 5/5 \\
+ & $\varepsilon=10^{-3}$ & 39--51 & $0.310\pm0.011$ & $5.80\times10^{-4}$ & $5.95\times10^{-3}$ & 2/5 \\
+\bottomrule
+\end{tabular}
+\caption{Cox explanations on an Apple M4 Pro GPU using JAX-Metal FP32,
+30 fixed training-background samples, and five distinct held-out patients.
+Time is mean $\pm$ sample standard deviation across patients, with one
+synchronized call per patient and method; node ranges span patients.
+Approximate results are newly measured; exact-degree rows reuse the matching
+previously measured baseline with identical model, inputs, numerical sources,
+software versions, and memory plan.
+$C_{\max}$ is the largest analytical absolute quadrature-error bound across
+patients. $\Delta_{\mathrm{GPU}}$ is the largest absolute difference from
+the matching GPU degree-exact output over all patients and features.
+Pass counts patients whose maximum feature-wise difference is at most
+$\varepsilon$. The certificate excludes floating-point error; GPU
+degree-exact output is itself subject to rounding.
+Warm-up and rule construction are excluded; automatic node selection is included.
+Previously measured CPU construction of the cached exact rules took 10.97\,s (GSE24080) and 561.92\,s (TCGA LGG); fresh approximate-rule construction took 0.386--0.563\,ms (range of medians over five constructions).}
+\label{tab:cox-high-dimensional}
+\end{table}

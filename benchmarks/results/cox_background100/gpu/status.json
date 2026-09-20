@@ -1,0 +1,13 @@
+{
+  "phase": "complete",
+  "pid": 32896,
+  "cases": 40,
+  "device": "gpu",
+  "dataset": "tcga_lgg_methylation",
+  "patient": 4,
+  "mode": "exact",
+  "call_phase": "measured",
+  "progress_file": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background100/gpu/checkpoints/tcga_lgg_methylation/patient_4/exact_progress.json",
+  "measured_calls": 40,
+  "wall_seconds_this_invocation": 1152.3999624169955
+}

@@ -1,0 +1,36 @@
+% Requires \usepackage{booktabs,amsmath}.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrc}
+\toprule
+Dataset & Method & Nodes & GPU time (s) & $C_{\max}$ & $\Delta_{\mathrm{GPU}}$ & Pass \\
+\midrule
+GSE24080 & Exact degree & 27,338 & $1.172\pm0.035$ & $0$ & --- & --- \\
+ & $\varepsilon=10^{-1}$ & 44--53 & $0.085\pm0.003$ & $7.69\times10^{-2}$ & $3.40\times10^{-4}$ & 5/5 \\
+ & $\varepsilon=10^{-3}$ & 46--54 & $0.089\pm0.010$ & $8.82\times10^{-4}$ & $1.31\times10^{-3}$ & 4/5 \\
+ & $\varepsilon=10^{-6}$ & 48--57 & $0.086\pm0.008$ & $9.81\times10^{-7}$ & $8.59\times10^{-4}$ & 0/5 \\
+\midrule
+TCGA LGG & Exact degree & 198,033 & $66.377\pm1.196$ & $0$ & --- & --- \\
+ & $\varepsilon=10^{-1}$ & 37--49 & $0.375\pm0.009$ & $7.01\times10^{-2}$ & $4.47\times10^{-3}$ & 5/5 \\
+ & $\varepsilon=10^{-3}$ & 39--51 & $0.374\pm0.019$ & $5.80\times10^{-4}$ & $5.95\times10^{-3}$ & 2/5 \\
+ & $\varepsilon=10^{-6}$ & 41--53 & $0.385\pm0.018$ & $7.89\times10^{-7}$ & $1.07\times10^{-2}$ & 0/5 \\
+\bottomrule
+\end{tabular}
+\caption{Cox explanations on an Apple M4 Pro GPU using JAX-Metal FP32,
+30 fixed training-background samples, and five distinct held-out patients.
+Time is mean $\pm$ sample standard deviation across patients, with one
+synchronized call per patient and method; node ranges span patients.
+$C_{\max}$ is the largest certified absolute quadrature bound across patients.
+$\Delta_{\mathrm{GPU}}$ is the largest absolute difference from the matching
+GPU degree-exact result over all patients and features; Pass counts patients
+whose maximum feature-wise difference is at most $\varepsilon$.
+The certificate excludes floating-point error, and GPU degree-exact output
+is itself subject to rounding. Warm-up and quadrature-rule construction
+are excluded; automatic node selection is included.
+Previously measured CPU construction of the cached exact rules took
+10.97\,s (GSE24080) and 561.92\,s (TCGA LGG); fresh approximate-rule
+construction took 0.418--0.625\,ms (range of medians over five constructions).}
+\label{tab:cox-high-dimensional}
+\end{table}

@@ -1,0 +1,38 @@
+{
+  "warmup_seconds": 0.401932915992802,
+  "pilot_core_seconds": [
+    0.2936031669960357,
+    0.2946167920017615,
+    0.2949823329981882
+  ],
+  "core_calls_per_patient": 210,
+  "projected_seconds_per_patient": 61.869526320369914,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 30,
+    "m_q": 27338,
+    "d": 54675,
+    "block_size": 1,
+    "node_block": 3926,
+    "n_blocks": 30,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 8588880624,
+    "full_peak_bytes": 1793744595360,
+    "mode": "fixed"
+  },
+  "core_dtype": "float64",
+  "warmup_protocol": "One synchronized real first-background node block with the full exact core shape; three additional pilot calls excluded from integration timing",
+  "rule": {
+    "exact_nodes": 27338,
+    "source": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/eps_1e6_followup/gse24080/quadrature_rule.npz",
+    "source_sha256": "f74e19d24dc21056f1446d8f91fb069fa1c86e21c2c47114b58ddfe0eb53cd79",
+    "original_construction_seconds": 10.97469870900386,
+    "cached_rule_load_seconds": 0.001802499988116324,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 5.572833861045012e-13
+  },
+  "rule_validation": {
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 5.572833861045012e-13
+  }
+}

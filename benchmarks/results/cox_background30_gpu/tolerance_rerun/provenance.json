@@ -1,0 +1,31 @@
+{
+  "exact_source": "../summary.csv",
+  "exact_attributions": "../attributions.npz",
+  "exact_baseline_reused": true,
+  "tolerances": [
+    0.1,
+    0.01,
+    0.001
+  ],
+  "background_size": 30,
+  "distinct_patients_per_dataset": 5,
+  "measured_calls_per_patient_method": 1,
+  "warmup": "Once per dataset and selected node count before first measured call",
+  "core_hashes_match_exact_baseline": true,
+  "packages_match_exact_baseline": true,
+  "input_sha256": {
+    "gse24080": "a80eb70b1029bb1d25b3d337b9df20314beaef95519f44387a4fb7cc261f2f3f",
+    "tcga_lgg_methylation": "ec2918087848fd19b8b65c3ce223278d6dead648291923c6ccb9c67ef102dc56"
+  },
+  "source_sha256": {
+    "summary.csv": "6a1a3848ee080f5d0c7101659ab3275eb53866d989b8d6562cb48e7e880d0de2",
+    "attributions.npz": "80c722c34c1bc2bb0efcc8778954ce9c3f322f23f8855924e624008c50fe28b4",
+    "design.json": "c76cdd24ce629a7a5304843d20c7befff6904b71fa32b1d16a005bd11172f75e",
+    "environment.json": "97915bcb52906aa366221884eb042d509ce7f96e4dec58ba5b3eb19965c084c4",
+    "rule_setup.json": "9d82e653707b1f86c1ae1da3dd7470f2472e56c4edbe5b9862ef7d87bd9d7131"
+  },
+  "reference_sha256": {
+    "gse24080": "4a64ac6c6438b8e44e8226cab18132e0240799f243e89c7958dae77df647ad14",
+    "tcga_lgg_methylation": "23493d44913978888df5a26b6d0323005bcfc234ad724f7920922655ec5d8329"
+  }
+}

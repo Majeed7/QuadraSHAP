@@ -1,0 +1,9 @@
+{
+  "bitwise_equal_to_public_api": true,
+  "bitwise_resume_equal": true,
+  "core_dtype": "float64",
+  "d": 19,
+  "B": 3,
+  "m_q": 10,
+  "node_block": 9
+}

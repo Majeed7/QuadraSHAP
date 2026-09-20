@@ -1,0 +1,10 @@
+{
+  "phase": "interrupted",
+  "pid": 18297,
+  "precision": "fp64",
+  "dataset": "gse24080",
+  "patient": 0,
+  "eps": 0.1,
+  "call_phase": "measured",
+  "measured_calls": 0
+}

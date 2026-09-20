@@ -1,0 +1,18 @@
+{
+  "completed_measured_calls": 40,
+  "distinct_patients_per_dataset": 5,
+  "background_samples": 30,
+  "measured_calls_per_patient_method": 1,
+  "excluded_warmup_calls": 23,
+  "numerical_sources_unchanged_during_benchmark": true,
+  "table_validation": "All cases, raw timings, sample standard deviations, node counts, caches and GPU environment checked",
+  "latex_compile_exit_code": 0,
+  "latex_warnings": 0,
+  "pdf_pages": 1,
+  "visual_check": "Passed: no clipping, overlap or broken symbols",
+  "artifact_sha256": {
+    "benchmarks/results/cox_background30_gpu/cox_gpu_timing_table.tex": "56d01fc4f5f6d39763e8e56fd75c076b7dccc0ecd23b41c3da496d04479e4e65",
+    "benchmarks/results/cox_background30_gpu/table.csv": "c22cbb4fc6d43e0936895ffbe2f8bafc262a564f9307d08ef9fa2fd57611ddc5",
+    "output/pdf/cox_gpu_timing_table.pdf": "70d4ba9b5397977d349479f336cbc1d6a497184998441366147b95785afc7d29"
+  }
+}

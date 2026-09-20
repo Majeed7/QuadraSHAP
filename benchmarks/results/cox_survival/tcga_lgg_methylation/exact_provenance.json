@@ -1,0 +1,22 @@
+{
+  "patient_id": "TCGA-CS-6665",
+  "environment": {
+    "utc": "2026-09-13T08:58:12.906538+00:00",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.15",
+    "packages": {
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "pandas": "3.0.5",
+      "scikit-learn": "1.9.0",
+      "scikit-survival": "0.28.0",
+      "matplotlib": "3.11.2"
+    }
+  },
+  "source_files": {
+    "model_and_preprocessing.npz": "78e49f60b47ec388b0d56afd24e95bb529e63e20869d2220cc07de3d014fc035",
+    "explanation_inputs.npz": "8a1e4f97994d3e57f363d72e4851c79cc7457a14625db740defb5caeea799de1",
+    "approximate_attributions.npz": "0a3ef8208f740b8d8657a85ad1f791938030d8d8f45beaee8e96d875ed0d9229",
+    "approximation_timings.csv": "f89483deb68b11b870f90478d258f9813384df66772215b106c89dbb8007e9c8"
+  }
+}

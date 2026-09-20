@@ -1,0 +1,25 @@
+{
+  "warmup_seconds": 0.41535812499932945,
+  "pilot_core_seconds": [
+    0.32794079100131057,
+    0.32176350001827814,
+    0.32460225000977516
+  ],
+  "projected_seconds_per_patient": 11912.902575358748,
+  "core_calls_per_patient": 36700,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 100,
+    "m_q": 198033,
+    "d": 396065,
+    "block_size": 1,
+    "node_block": 541,
+    "n_blocks": 100,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 8589870704,
+    "full_peak_bytes": 313738136971200,
+    "mode": "fixed"
+  },
+  "core_dtype": "float64",
+  "protocol": "One real exact-shape core warm-up and three pilot core calls, all excluded from integration timing"
+}

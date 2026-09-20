@@ -30,7 +30,7 @@ _TENSORS_PER_BACKEND = {
     "prefix_scan_numpy": 4.0,   # B, pref, suf (pref*suf in place) and the reduction temporary
     "prefix_scan_jax": 4.0,
     "logspace_numpy": 0.0,      # keeps only (node_block, block_size) accumulators
-    "logspace_jax": 2.0,        # vmap over features may materialise (d, node_block, block_size)
+    "logspace_jax": 5.0,        # parallel accelerator factors, signs, logs, integrands and reduction
 }
 _PER_PAIR_BYTES_FACTOR = 6  # K, Ut, U, Phi and two temporaries of shape (block_size, d)
 

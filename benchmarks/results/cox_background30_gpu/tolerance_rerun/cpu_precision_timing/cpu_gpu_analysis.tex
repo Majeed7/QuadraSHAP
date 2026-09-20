@@ -1,0 +1,68 @@
+\paragraph{Separating approximation error from numerical precision.}
+To determine whether the observed discrepancies arise from the quadrature
+approximation or its numerical evaluation, we compare GPU FP32, CPU FP32,
+and CPU FP64 explanations for the same fitted Cox models and empirical
+background games. We retain the 30 fixed training-background patients,
+five distinct held-out patients per dataset, and automatic node choices for
+$\varepsilon\in\{10^{-1},10^{-2},10^{-3}\}$.
+The GPU results are reused from the saved experiments; both CPU controls
+are newly measured. Inputs, numerical sources, and package versions were
+verified against the GPU experiment. The CPU controls evaluate the same
+parallel product-game formula at the same selected node counts. CPU FP32
+provides a control on the same hardware as CPU FP64, so that changing the
+device is not necessary to investigate the effect of precision.
+
+Across the three tolerances, mean CPU FP64 latencies are 156--164\,ms
+for GSE24080 and 992--1,035\,ms for TCGA LGG, compared with
+85--90\,ms and 310--320\,ms for the saved GPU FP32 runs.
+These are measured precision/device tradeoffs, not predictions of
+FP64 GPU performance.
+
+All three configurations are compared with the same independent 64-node
+FP64 reference $\phi^{\mathrm{ref}}_p$:
+\[
+\Delta_a=\max_{p=1,\ldots,5}
+\|\widehat\phi^{a}_{m_p,p}-\phi^{\mathrm{ref}}_p\|_\infty,
+\qquad a\in\{\mathrm{GPU32},\mathrm{CPU32},\mathrm{CPU64}\}.
+\]
+This reference has analytical quadrature bounds below $10^{-10}$ and a
+96-node cross-check for the first patient of each dataset. It is a
+high-accuracy numerical reference, not a full degree-exact FP64 computation.
+In particular, $\Delta_{\mathrm{GPU}}$ in
+Table~\ref{tab:cox-cpu-gpu-precision} now uses this common reference;
+it is not the discrepancy against rounded GPU degree-exact output reported
+in the earlier table. All automatically selected rules satisfy their
+analytical bounds $C_p\le\varepsilon$ in real arithmetic.
+
+Against the common reference, GPU FP32 meets the requested threshold in
+19/30 patient--tolerance cases, CPU FP32 in 19/30,
+and CPU FP64 in 30/30. The worst errors over these cases are
+$3.91\times10^{-2}$, $3.98\times10^{-2}$, and $1.59\times10^{-10}$, respectively.
+The reduction in error from CPU FP32 to CPU FP64, with the device and
+formula held fixed, supports limited work precision as an important source
+of the discrepancies. Differences between the CPU FP32 and GPU FP32
+outputs additionally show the role of backend-specific evaluation.
+These numerical controls support this explanation but do not constitute
+a formal floating-point error bound.
+
+For timing, each distinct dataset/node-count configuration is warmed up
+once before its first measured call. We record one synchronized API call
+per patient and method, including automatic node selection, data movement,
+and host accumulation. Model fitting, compilation/warm-up, and cached rule
+construction are excluded. The CPU and GPU runs use an 8\,GiB planning
+budget and one background row per block; this is a planning budget, not
+measured memory consumption. Reported standard deviations describe
+variation across patients rather than repeated-call uncertainty.
+The saved GPU timings and new CPU timings were recorded in separate runs.
+The CPU FP64/GPU FP32 latency ratio changes both device and precision,
+so it should not be interpreted as a matched-precision GPU speedup.
+Full degree-exact CPU runtimes were not measured and are left blank.
+
+The analytical guarantee remains a bound on quadrature error for the
+fixed fitted model and chosen 30-row empirical background game.
+It excludes floating-point rounding, uncertainty in the fitted model,
+and error from replacing a population background with this empirical
+background. Small FP64 discrepancies are an empirical accuracy check,
+not a stronger analytical certificate. The observed accuracy of CPU FP64
+must therefore be paired with its CPU runtime rather than with the faster
+GPU FP32 runtime.

@@ -1,0 +1,44 @@
+{
+  "cpu_unit_tests": {
+    "command": "PYTHONPATH=src JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 .venv-metal/bin/python -m pytest -q tests/test_large_quadrature_rule.py tests/test_node_budget.py tests/test_absent_factors.py tests/test_blocks.py tests/test_multiplicative_models.py -k \"not log_link and not logistic and not naive and not factory\"",
+    "passed": 18,
+    "deselected": 4,
+    "seconds": 12.4
+  },
+  "initial_metal_smoke": {
+    "device": "Apple M4 Pro / METAL:0",
+    "jit_enabled": true,
+    "primitive_matmul": {
+      "first_seconds": 0.6513402500004304,
+      "warm_seconds": 0.0006515000004583271,
+      "passed": true
+    },
+    "original_cox_d8_prefix": {
+      "first_seconds": 0.9308154160007689,
+      "warm_seconds": 0.0048190420002356404,
+      "max_absolute_error_vs_exhaustive": 1.138258420851912e-08,
+      "passed": true
+    },
+    "original_cox_d8_logspace": {
+      "first_seconds": 0.6086056669992104,
+      "warm_seconds": 0.0024053750003076857,
+      "max_absolute_error_vs_exhaustive": 2.0952162921306083e-09,
+      "passed": true
+    }
+  },
+  "original_full_dimension_pilot": {
+    "scope": "explained patient 0, four backgrounds, eight quadrature nodes, before parallel log-space reduction fix; exploratory single warm run",
+    "gse24080": {
+      "prefix_seconds": 0.01912550000088231,
+      "prefix_max_abs": 2.2009849845683327e-05,
+      "logspace_seconds": 0.7001214170013554,
+      "logspace_max_abs": 0.00017882408231428837
+    },
+    "tcga_lgg_methylation": {
+      "prefix_seconds": 0.07066545800080348,
+      "prefix_max_abs": 6.983612896226815e-05,
+      "logspace_status": "First full-dimension log-space call did not return; process terminated after more than 90 seconds. No successful time reported."
+    }
+  },
+  "final_gpu_correctness_check": "See small_exhaustive.csv and executed notebook: 12 features, all 4096 coalitions, both GPU backends and CPU prefix scan."
+}

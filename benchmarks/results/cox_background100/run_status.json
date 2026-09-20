@@ -1,0 +1,10 @@
+{
+  "phase": "stopped_by_user",
+  "pid": 32894,
+  "started_utc": "2026-09-20T00:26:08.953912+00:00",
+  "device": "cpu",
+  "child_pid": 33988,
+  "phase_before_user_stop": "running",
+  "stopped_at_utc": "2026-09-20T06:58:19.190790+00:00",
+  "stop_reason": "User requested all jobs stop; recorded processes and task-associated workers verified absent."
+}

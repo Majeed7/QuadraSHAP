@@ -1,0 +1,14 @@
+{
+  "phase": "stopped_by_user",
+  "pid": 33988,
+  "cases": 36,
+  "device": "cpu",
+  "dataset": "tcga_lgg_methylation",
+  "patient": 1,
+  "mode": "exact",
+  "call_phase": "measured",
+  "progress_file": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background100/cpu/checkpoints/tcga_lgg_methylation/patient_1/exact_progress.json",
+  "phase_before_user_stop": "running",
+  "stopped_at_utc": "2026-09-20T06:58:19.190790+00:00",
+  "stop_reason": "User requested all jobs stop; recorded processes and task-associated workers verified absent."
+}

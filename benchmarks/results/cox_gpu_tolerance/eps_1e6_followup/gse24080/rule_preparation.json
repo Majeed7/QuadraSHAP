@@ -1,0 +1,20 @@
+{
+  "source": "benchmarks/results/cox_gpu_tolerance/eps_1e6_followup/gse24080/quadrature_rule.npz",
+  "sha256": "f74e19d24dc21056f1446d8f91fb069fa1c86e21c2c47114b58ddfe0eb53cd79",
+  "m_q": 27338,
+  "preparation": "Loaded saved rule",
+  "fresh_rule_seconds": null,
+  "preparation_wall_seconds": 0.0009159999899566174,
+  "symmetry_max_error": 0.0,
+  "moment_max_error": 5.572833861045012e-13,
+  "original_preparation": {
+    "source": "benchmarks/results/cox_gpu_tolerance/eps_1e6_followup/gse24080/quadrature_rule.npz",
+    "sha256": "f74e19d24dc21056f1446d8f91fb069fa1c86e21c2c47114b58ddfe0eb53cd79",
+    "m_q": 27338,
+    "preparation": "Fresh rule generated on CPU and saved",
+    "fresh_rule_seconds": 10.97469870900386,
+    "preparation_wall_seconds": 10.976159625017317,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 5.572833861045012e-13
+  }
+}

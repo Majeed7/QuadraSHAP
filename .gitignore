@@ -1,5 +1,6 @@
 # Virtual environments
 .venv/
+.venv-metal/
 venv/
 env/
 ENV/
@@ -94,3 +95,35 @@ models/
 # raw experiment outputs / cached data (large, regenerable)
 experiments/results/
 experiments/data/
+
+# Downloaded research datasets and generated experiment matrices.
+data/experiments/raw/
+data/experiments/processed/
+data/experiments/validation_*.json
+
+# Reproducible Cox model states and full attribution arrays (retained locally).
+benchmarks/results/cox_survival/*/*.npz
+benchmarks/results/cox_survival/*/*.npy
+benchmarks/results/cox_survival/*/coefficients.csv
+
+# Generated arrays from the Cox GPU benchmark (keep the small timing tables).
+benchmarks/results/cox_gpu_tolerance/**/*.npz
+benchmarks/results/cox_gpu_tolerance/**/*.npy
+benchmarks/results/cox_gpu_tolerance/**/coefficients.csv
+
+# Larger-background Cox experiment inputs and attribution arrays.
+benchmarks/results/cox_background_sensitivity/**/*.npy
+benchmarks/results/cox_background_sensitivity/**/*.npz
+
+# Matched 30-background GPU timing study.
+benchmarks/results/cox_background30_gpu/**/*.npy
+benchmarks/results/cox_background30_gpu/**/*.npz
+
+# Matched 100-background CPU/GPU study.
+benchmarks/results/cox_background100/**/*.npy
+benchmarks/results/cox_background100/**/*.npz
+benchmarks/results/cox_background100/**/*.lock
+
+# Local notification requests and delivery receipts.
+benchmarks/results/**/email_request.json
+benchmarks/results/**/*email_delivery.json

@@ -1,0 +1,16 @@
+{
+  "background_size": 339,
+  "m_q": 64,
+  "quadrature_bounds": [
+    1.1409348479662274e-16,
+    2.2999025569825e-18,
+    3.1743832764452966e-24
+  ],
+  "algorithm": "Independent float64 log1p/expm1 Cox quadrature",
+  "reference_type": "Tightly bounded approximation, not full exact-degree quadrature",
+  "crosscheck_m_q": 96,
+  "crosscheck_patient": 0,
+  "crosscheck_max_absolute_difference": 2.5011104298755527e-12,
+  "reference_seconds": 22.53564924999955,
+  "crosscheck_seconds": 11.100853250001819
+}

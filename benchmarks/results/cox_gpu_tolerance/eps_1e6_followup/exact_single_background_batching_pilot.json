@@ -1,0 +1,40 @@
+[
+  {
+    "memory_budget": "4GB",
+    "block_size": 1,
+    "first_seconds": 0.9344393750070594,
+    "warm_seconds": 0.6825521659920923,
+    "plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 32,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 269,
+      "n_blocks": 32,
+      "budget_bytes": 4294967296,
+      "estimated_peak_bytes": 4280676976,
+      "full_peak_bytes": 519739459072,
+      "mode": "fixed"
+    }
+  },
+  {
+    "memory_budget": "8GB",
+    "block_size": 1,
+    "first_seconds": 0.5426127090177033,
+    "warm_seconds": 0.49167254197527654,
+    "plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 32,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 541,
+      "n_blocks": 32,
+      "budget_bytes": 8589934592,
+      "estimated_peak_bytes": 8589870704,
+      "full_peak_bytes": 519739459072,
+      "mode": "fixed"
+    }
+  }
+]

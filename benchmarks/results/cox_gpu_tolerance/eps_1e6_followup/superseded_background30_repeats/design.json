@@ -1,0 +1,38 @@
+{
+  "gse24080": {
+    "n_train": 339,
+    "d": 54675,
+    "background_size": 30,
+    "selection_seed": 42,
+    "selection": "First 30 entries of the saved seed-42 permutation of training rows, without replacement",
+    "patient_ids": [
+      "16574",
+      "16570",
+      "16518"
+    ],
+    "model_refitted": false,
+    "source_sha256": {
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/inputs.npz": "d21c465e7d8b9d69fde6a649cb53b1349a1e21928c7f4f19bb58a0b1d587af7f",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/training_background.npy": "ab7f71060131fb3bd744f1a74a5e4afa846f92ec224c29d04a7f54b84d262832"
+    },
+    "prepared_inputs_sha256": "0eb00168d32909735054d46185e54a75da199960004158a3f16a03369f691097"
+  },
+  "tcga_lgg_methylation": {
+    "n_train": 383,
+    "d": 396065,
+    "background_size": 30,
+    "selection_seed": 42,
+    "selection": "First 30 entries of the saved seed-42 permutation of training rows, without replacement",
+    "patient_ids": [
+      "TCGA-CS-6665",
+      "TCGA-DU-A5TS",
+      "TCGA-HT-8113"
+    ],
+    "model_refitted": false,
+    "source_sha256": {
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/inputs.npz": "ce572983d011386ddb3bf3b2d746318700b8362c7431e148bb90eb3ce771bf99",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/training_background.npy": "43fbc85eab1d06112361fd97ced5bd4b5b08a313beea84599f91a0bfc21dcc01"
+    },
+    "prepared_inputs_sha256": "1fb13407222311aeb8780839d74e04cb69f733eca6bdf95996060bba95801b15"
+  }
+}

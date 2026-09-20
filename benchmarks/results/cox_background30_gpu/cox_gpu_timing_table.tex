@@ -1,0 +1,32 @@
+% Requires \usepackage{booktabs}. Node ranges are plain text outside math mode.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{GSE24080} & \multicolumn{2}{c}{TCGA LGG methylation} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Method & Nodes & GPU time (s) & Nodes & GPU time (s) \\
+\midrule
+Exact degree & 27,338 & $1.172 \pm 0.035$ & 198,033 & $66.377 \pm 1.196$ \\
+$\varepsilon=10^{-1}$ & 44--53 & $0.085 \pm 0.003$ & 37--49 & $0.375 \pm 0.009$ \\
+$\varepsilon=10^{-3}$ & 46--54 & $0.089 \pm 0.010$ & 39--51 & $0.374 \pm 0.019$ \\
+$\varepsilon=10^{-6}$ & 48--57 & $0.086 \pm 0.008$ & 41--53 & $0.385 \pm 0.018$ \\
+\bottomrule
+\end{tabular}
+\caption{Cox explanation times on an Apple M4 Pro GPU (JAX-Metal, FP32),
+using 30 fixed training-background samples. GSE24080 and TCGA LGG have
+$(n_{\mathrm{train}},d)=(339,54{,}675)$ and $(383,396{,}065)$, respectively.
+Times are mean $\pm$ sample standard deviation across five distinct held-out
+patients, with one synchronized call per patient and method. Node ranges span
+patients. Warm-up and cached rule construction are excluded; automatic node
+selection is included. ``Exact degree'' denotes exact quadrature in real
+arithmetic; the requested absolute quadrature tolerance $\varepsilon$ excludes FP32 rounding.
+Measured absolute errors exceeded the requested tolerance in 19/30 approximate cases.
+Previously measured CPU construction of the cached exact rules took
+10.97\,s (GSE24080) and 561.92\,s (TCGA).
+Fresh approximate-rule construction took 0.418--0.625\,ms
+(range of per-rule medians over five constructions).}
+\label{tab:cox-gpu-background30}
+\end{table}
