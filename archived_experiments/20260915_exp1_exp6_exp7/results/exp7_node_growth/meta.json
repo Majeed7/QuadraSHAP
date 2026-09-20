@@ -1,0 +1,34 @@
+{
+  "experiment": "exp7_node_growth",
+  "timestamp": "2026-09-14 10:18:29",
+  "environment": {
+    "python": "3.12.7",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "arm",
+    "git": "31b0164",
+    "numpy": "2.3.3",
+    "scipy": "1.16.2",
+    "sklearn": "1.8.0",
+    "shap": "0.48.0",
+    "jax": "0.8.0",
+    "matplotlib": "3.10.7"
+  },
+  "dimensions": [
+    50,
+    100,
+    250,
+    500,
+    1000
+  ],
+  "n_instances": 30,
+  "n_train": 300,
+  "informative_fraction": 0.3,
+  "rbf_gamma": 0.005,
+  "alpha": 0.1,
+  "epsilon": 1e-06,
+  "value_function": "neutral",
+  "backend": "prefix_scan_numpy",
+  "n_rows": 150,
+  "elapsed_seconds": 65.4855588749997
+}

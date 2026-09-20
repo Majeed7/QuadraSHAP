@@ -90,3 +90,7 @@ _skbuild/
 
 # experiment model cache (experiments/exp4)
 models/
+
+# raw experiment outputs / cached data (large, regenerable)
+experiments/results/
+experiments/data/

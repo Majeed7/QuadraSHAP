@@ -34,13 +34,13 @@ NAME = "exp1_certified_bound"
 
 # (label, d, gamma*d, value function, n_background, n_instances)
 SETTINGS = [
-    ("d=100, wide",    100,   1.0, "neutral",        0,  10),
-    ("d=100, narrow",  100,  30.0, "neutral",        0,  10),
-    ("d=1000, wide",  1000,   1.0, "neutral",        0,   5),
-    ("d=1000, medium",1000,  10.0, "neutral",        0,   5),
-    ("d=1000, narrow",1000, 100.0, "neutral",        0,   5),
-    ("d=100, interv.", 100,   1.0, "interventional", 5,  10),
-    ("d=1000, interv.",1000,  1.0, "interventional", 5,   3),
+    ("d=100, wide",    100,   1.0, "neutral",        0,  30),
+    ("d=100, narrow",  100,  30.0, "neutral",        0,  30),
+    ("d=1000, wide",  1000,   1.0, "neutral",        0,   30),
+    ("d=1000, medium",1000,  10.0, "neutral",        0,   30),
+    ("d=1000, narrow",1000, 100.0, "neutral",        0,   30),
+    ("d=100, interv.", 100,   1.0, "interventional", 5,  30),
+    ("d=1000, interv.",1000,  1.0, "interventional", 5,   30),
 ]
 EPSILONS = [1e-1, 1e-2, 1e-3, 1e-4, 1e-6, 1e-8]
 N_TRAIN = 300
@@ -49,7 +49,7 @@ N_TRAIN = 300
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="tiny version for smoke tests")
-    ap.add_argument("--backend", default="logspace_numpy")
+    ap.add_argument("--backend", default="logspace_jax")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
@@ -61,7 +61,7 @@ def main() -> None:
     rows, decay_rows = [], []
     t_start = time.perf_counter()
     for label, d, gs, vf, n_b, n_inst in settings:
-        X, y, _ = synthetic_regression(n_train + 20, d, min(10, d // 2), seed=args.seed, scale=1.0)
+        X, y, _ = synthetic_regression(n_train + 20, d, min(1000, d // 3), seed=args.seed, scale=1.0)
         model = fit_krr(X[:n_train], y[:n_train], gamma_scale=gs)
         ex = RKHSExplainer(model, backend=args.backend)
         kw = {"background": X[:n_b]} if vf == "interventional" else {}

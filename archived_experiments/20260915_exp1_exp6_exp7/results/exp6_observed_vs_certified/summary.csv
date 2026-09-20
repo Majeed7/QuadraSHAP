@@ -1,0 +1,4 @@
+d,n_informative_features,informative_fraction,n_instances,n_points,exact_threshold,n_informative_points,coverage,informative_coverage,median_log10_slack,p90_log10_slack
+100,30,0.3,60,600,50,554,1.0,1.0,2.6200554272440755,4.429616782857705
+500,150,0.3,40,400,250,378,1.0,1.0,2.6555047589198137,3.1583825414124056
+1000,300,0.3,25,250,500,248,1.0,1.0,2.6109701228250297,2.9896155801841084

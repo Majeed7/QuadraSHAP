@@ -1,0 +1,55 @@
+{
+  "experiment": "exp6_certificate_population",
+  "timestamp": "2026-09-13 20:37:21",
+  "environment": {
+    "python": "3.12.7",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "arm",
+    "git": "31b0164",
+    "numpy": "2.3.3",
+    "scipy": "1.16.2",
+    "sklearn": "1.8.0",
+    "shap": "0.48.0",
+    "jax": "0.8.0",
+    "matplotlib": "3.10.7"
+  },
+  "settings": [
+    {
+      "d": 100,
+      "n_instances": 60,
+      "gamma_times_d": 29.145733740690048,
+      "lambda_mean": 40.00000000000888
+    },
+    {
+      "d": 500,
+      "n_instances": 40,
+      "gamma_times_d": 19.409900959100924,
+      "lambda_mean": 40.0000000000046
+    },
+    {
+      "d": 1000,
+      "n_instances": 25,
+      "gamma_times_d": 18.97120976007136,
+      "lambda_mean": 39.99999999997654
+    }
+  ],
+  "target_lambda": 40.0,
+  "lambda_control": "RBF gamma calibrated per d to fix the population mean Lambda",
+  "value_function": "neutral",
+  "n_train": 300,
+  "backend": "prefix_scan_numpy",
+  "node_grid": [
+    2,
+    3,
+    4,
+    7,
+    10,
+    15,
+    22,
+    33,
+    49
+  ],
+  "n_points": 1125,
+  "elapsed_seconds": 129.68852275000063
+}

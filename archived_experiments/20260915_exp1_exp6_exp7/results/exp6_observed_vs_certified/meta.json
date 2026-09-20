@@ -1,0 +1,80 @@
+{
+  "experiment": "exp6_observed_vs_certified",
+  "timestamp": "2026-09-13 21:03:12",
+  "environment": {
+    "python": "3.12.7",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "arm",
+    "git": "31b0164",
+    "numpy": "2.3.3",
+    "scipy": "1.16.2",
+    "sklearn": "1.8.0",
+    "shap": "0.48.0",
+    "jax": "0.8.0",
+    "matplotlib": "3.10.7"
+  },
+  "settings": [
+    {
+      "d": 100,
+      "n_informative": 30,
+      "n_instances": 60
+    },
+    {
+      "d": 500,
+      "n_informative": 150,
+      "n_instances": 40
+    },
+    {
+      "d": 1000,
+      "n_informative": 300,
+      "n_instances": 25
+    }
+  ],
+  "informative_fraction": 0.3,
+  "n_train": 300,
+  "gamma_scale": 10.0,
+  "alpha": 0.1,
+  "value_function": "neutral",
+  "backend": "prefix_scan_numpy",
+  "node_grids": {
+    "100": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12,
+      16
+    ],
+    "500": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12,
+      16
+    ],
+    "1000": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12,
+      16
+    ]
+  },
+  "n_points": 1250,
+  "elapsed_seconds": 154.37356441699922
+}

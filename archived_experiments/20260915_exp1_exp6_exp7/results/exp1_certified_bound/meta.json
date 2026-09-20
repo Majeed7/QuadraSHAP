@@ -1,0 +1,89 @@
+{
+  "experiment": "exp1_certified_bound",
+  "timestamp": "2026-09-14 10:34:50",
+  "environment": {
+    "python": "3.12.7",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "arm",
+    "git": "31b0164",
+    "numpy": "2.4.4",
+    "scipy": "1.17.1",
+    "sklearn": "1.8.0",
+    "shap": "0.51.0",
+    "jax": "0.4.38",
+    "matplotlib": null
+  },
+  "settings": [
+    {
+      "label": "d=100, wide",
+      "d": 100,
+      "gamma_times_d": 1.0,
+      "value_function": "neutral",
+      "n_background": 0,
+      "n_instances": 10
+    },
+    {
+      "label": "d=100, narrow",
+      "d": 100,
+      "gamma_times_d": 30.0,
+      "value_function": "neutral",
+      "n_background": 0,
+      "n_instances": 10
+    },
+    {
+      "label": "d=1000, wide",
+      "d": 1000,
+      "gamma_times_d": 1.0,
+      "value_function": "neutral",
+      "n_background": 0,
+      "n_instances": 5
+    },
+    {
+      "label": "d=1000, medium",
+      "d": 1000,
+      "gamma_times_d": 10.0,
+      "value_function": "neutral",
+      "n_background": 0,
+      "n_instances": 5
+    },
+    {
+      "label": "d=1000, narrow",
+      "d": 1000,
+      "gamma_times_d": 100.0,
+      "value_function": "neutral",
+      "n_background": 0,
+      "n_instances": 5
+    },
+    {
+      "label": "d=100, interv.",
+      "d": 100,
+      "gamma_times_d": 1.0,
+      "value_function": "interventional",
+      "n_background": 5,
+      "n_instances": 10
+    },
+    {
+      "label": "d=1000, interv.",
+      "d": 1000,
+      "gamma_times_d": 1.0,
+      "value_function": "interventional",
+      "n_background": 5,
+      "n_instances": 3
+    }
+  ],
+  "epsilons": [
+    0.1,
+    0.01,
+    0.001,
+    0.0001,
+    1e-06,
+    1e-08
+  ],
+  "n_train": 300,
+  "backend": "logspace_jax",
+  "seed": 0,
+  "runs": 288,
+  "bound_held": 230,
+  "elapsed_seconds": 834.040288207998
+}

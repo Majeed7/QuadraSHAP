@@ -21,12 +21,11 @@ HERE = Path(__file__).resolve().parent
 EXPERIMENTS = {
     1: ("exp1_certified_bound.py", "does the a priori certificate hold, and how tight is it"),
     2: ("exp2_ranking_vs_eps.py", "does the certified tolerance preserve the ranking"),
-    3: ("exp3_synthetic_recovery.py", "recovery/fidelity pilot; use --profile full on the standalone script for publication collection"),
+    3: ("exp3_synthetic_recovery.py", "300x1000 synthetic: accuracy, recovery and cost vs the SHAP family"),
     4: ("exp4_sentiment_deletion.py", "sentiment analysis: cost and deletion quality"),
     5: ("exp5_backend_and_stability.py", "the two evaluators: cost, blocking, and numerical stability"),
-    6: ("exp6_certificate_population.py", "observed vs certified error over a population of instances"),
-    7: ("exp7_text_methods.py", "text classification: QuadraSHAP vs the SHAP family, error vs cost"),
-    9: ("exp9_text_interventional.py", "interventional value function over the vocabulary: wall-clock to a certified accuracy"),
+    6: ("exp6_observed_vs_certified.py", "one observed-vs-certified error figure per feature count"),
+    7: ("exp7_node_growth.py", "how required node counts grow with feature dimension"),
 }
 
 

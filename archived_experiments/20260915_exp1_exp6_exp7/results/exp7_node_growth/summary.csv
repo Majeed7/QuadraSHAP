@@ -1,0 +1,6 @@
+d,n_informative,n_instances,epsilon,observed_median,observed_p05,observed_p95,certified_median,certified_p05,certified_p95,exact_threshold,exact_over_certified,bound_coverage,tolerance_coverage
+50,15,30,1e-06,3.0,3.0,3.0,4.0,4.0,4.0,25,6.25,1.0,1.0
+100,30,30,1e-06,3.0,3.0,3.0,4.0,4.0,4.0,50,12.5,1.0,1.0
+250,75,30,1e-06,4.0,4.0,4.0,5.0,5.0,6.0,125,25.0,1.0,1.0
+500,150,30,1e-06,5.0,5.0,5.0,7.0,7.0,7.0,250,35.714285714285715,1.0,1.0
+1000,300,30,1e-06,7.0,7.0,7.0,9.0,8.0,9.0,500,55.55555555555556,1.0,1.0

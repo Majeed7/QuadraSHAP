@@ -35,6 +35,9 @@ memory = [
 gpu = [
     "cupy-cuda12x>=13",
 ]
+metal = [
+    "jax-metal>=0.1.1",
+]
 
 [dependency-groups]
 testing = [
