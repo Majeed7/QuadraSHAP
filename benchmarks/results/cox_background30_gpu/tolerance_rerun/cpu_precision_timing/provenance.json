@@ -1,0 +1,29 @@
+{
+  "input_sha256": {
+    "gse24080": "a80eb70b1029bb1d25b3d337b9df20314beaef95519f44387a4fb7cc261f2f3f",
+    "tcga_lgg_methylation": "ec2918087848fd19b8b65c3ce223278d6dead648291923c6ccb9c67ef102dc56"
+  },
+  "reference_sha256": {
+    "gse24080": "4a64ac6c6438b8e44e8226cab18132e0240799f243e89c7958dae77df647ad14",
+    "tcga_lgg_methylation": "23493d44913978888df5a26b6d0323005bcfc234ad724f7920922655ec5d8329"
+  },
+  "gpu_source_sha256": {
+    "gpu_summary.csv": "d948f9e4a7405b884a3c46e32749a516ba907b25bf2f0e539f9bc645e8ee9c66",
+    "gpu_attributions.npz": "18941e3a7b11a24d39df6ea7ead672fda8e12b98bf5fc659f2f5b22a45029c37",
+    "gpu_environment.json": "f165afb9998fdd6c93bf738098ffed20d61d311f6f72355e7796b52626517032"
+  },
+  "exact_source_sha256": {
+    "summary.csv": "6a1a3848ee080f5d0c7101659ab3275eb53866d989b8d6562cb48e7e880d0de2",
+    "attributions.npz": "80c722c34c1bc2bb0efcc8778954ce9c3f322f23f8855924e624008c50fe28b4",
+    "design.json": "c76cdd24ce629a7a5304843d20c7befff6904b71fa32b1d16a005bd11172f75e",
+    "environment.json": "97915bcb52906aa366221884eb042d509ce7f96e4dec58ba5b3eb19965c084c4"
+  },
+  "background_size": 30,
+  "distinct_patients_per_dataset": 5,
+  "measured_calls_per_patient_method": 1,
+  "warmup": "Once per dataset and selected node count before the first measured call",
+  "timing_includes": "Automatic node selection, explanation, host accumulation and report calculations",
+  "timing_excludes": "Model fit, warmup/JIT compilation, quadrature-rule construction",
+  "exact_cpu_measured": false,
+  "gpu_timings_reused": true
+}

@@ -1,0 +1,27 @@
+{
+  "input_sha256": {
+    "gse24080": "a80eb70b1029bb1d25b3d337b9df20314beaef95519f44387a4fb7cc261f2f3f",
+    "tcga_lgg_methylation": "ec2918087848fd19b8b65c3ce223278d6dead648291923c6ccb9c67ef102dc56"
+  },
+  "cpu_approx_sha256": {
+    "cpu_fp64_summary.csv": "5aafb418e1e30b4f6a2958ad244ae816230641b9c35cee41b6937f7c6e0a40f1",
+    "cpu_fp64_attributions.npz": "d3d44c13c203050819a41ae14ff75e61d4e6153a9aeeaf40a6b7610575e8996a",
+    "cpu_fp64_environment.json": "44d779a03396557861e3f54a3e966490bdc38ff578d9abeb6aedeb10bd458ed0"
+  },
+  "gpu_approx_sha256": {
+    "gpu_summary.csv": "d948f9e4a7405b884a3c46e32749a516ba907b25bf2f0e539f9bc645e8ee9c66",
+    "gpu_attributions.npz": "18941e3a7b11a24d39df6ea7ead672fda8e12b98bf5fc659f2f5b22a45029c37",
+    "gpu_environment.json": "f165afb9998fdd6c93bf738098ffed20d61d311f6f72355e7796b52626517032"
+  },
+  "gpu_exact_sha256": {
+    "summary.csv": "6a1a3848ee080f5d0c7101659ab3275eb53866d989b8d6562cb48e7e880d0de2",
+    "attributions.npz": "80c722c34c1bc2bb0efcc8778954ce9c3f322f23f8855924e624008c50fe28b4",
+    "environment.json": "97915bcb52906aa366221884eb042d509ce7f96e4dec58ba5b3eb19965c084c4",
+    "rule_setup.json": "9d82e653707b1f86c1ae1da3dd7470f2472e56c4edbe5b9862ef7d87bd9d7131"
+  },
+  "background_size": 30,
+  "distinct_patients_per_dataset": 5,
+  "measured_calls_per_patient_method": 1,
+  "exact_cpu_measured": true,
+  "timing_protocol": "Checkpointed integration reproduces public API factor/block order; active integration time excludes checkpoint IO, cached rule load/construction and kernel-shape warmup/pilot"
+}

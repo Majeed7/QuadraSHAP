@@ -1,0 +1,152 @@
+\subsection{Additional details for high-dimensional Cox experiments}
+\label{app:cox-device-exact}
+
+To assess whether Shapley attribution remains practical when the number of
+features greatly exceeds the number of patients, we consider two genomic
+survival datasets: GSE24080 multiple-myeloma gene expression
+\cite{geo_gse24080} and TCGA lower-grade glioma (LGG) DNA methylation
+\cite{tcga_lgg_methylation}.
+Genome-wide assays measure many molecular variables per patient, whereas
+the cohorts with matched survival follow-up contain only hundreds of patients.
+After eligibility filtering, GSE24080 contains 553 patients and 54,675
+expression probe sets, and TCGA LGG contains 511 patients and 396,065
+methylation sites. These are probe- or site-level features, retained without
+gene aggregation. We use the supplied 339/214 training/validation split
+for GSE24080 and a 383/128 split stratified by event status for TCGA LGG
+(seed 42), giving an extreme small-$n$, large-$d$ setting.
+
+We model overall survival using a Cox proportional-hazards model, which
+incorporates right-censored observations: patients whose death has not been
+observed by the end of follow-up. Its relative hazard factors across features,
+making QuadraSHAP applicable directly:
+\[
+h(t\mid x)=h_0(t)f(x),
+\qquad
+f(x)=\exp(\beta^\top x)=\prod_{j=1}^{d}\exp(\beta_jx_j).
+\]
+To stabilize estimation when $d\gg n$, we shrink the Cox coefficients
+towards zero using a ridge penalty, with the implementation's penalty
+parameter fixed a priori at $\alpha=0.01d$. We use the Breslow approximation
+for patients with equal recorded event times. Missing values are imputed using
+training medians, and centering and scaling use training statistics.
+All retained features have nonzero fitted coefficients.
+
+We explain the relative hazard using 30 training-background patients,
+sampled without replacement with seed 42 and held fixed across methods.
+Specifically, absent features are replaced by the corresponding entries
+of each background row and predictions are averaged:
+\[
+v_x(S)=\frac{1}{30}\sum_{b=1}^{30}
+f\bigl(x_S,z^{(b)}_{\overline S}\bigr).
+\]
+The resulting game is a weighted sum of product games. We explain the
+first five held-out patients in each saved split with the degree-exact rule
+$m_q=\lceil d/2\rceil$ and with patient-specific node counts selected
+to certify absolute quadrature tolerances
+$\varepsilon\in\{10^{-1},10^{-2},10^{-3}\}$.
+
+\paragraph{Matched degree-exact references.}
+To assess approximation accuracy without changing the numerical backend,
+we use a separate degree-exact reference for each device/precision setting.
+Write $\widehat\phi^{a}_{m_p,p}$ for patient $p$'s computed attribution
+vector using $m_p$ nodes, with $a=\mathrm{GPU}$ denoting GPU FP32 and
+$a=\mathrm{CPU}$ denoting CPU FP64. Let $m_\star=\lceil d/2\rceil$.
+The table reports
+\[
+\Delta_a=\max_{p=1,\ldots,5}
+\|\widehat\phi^{a}_{m_p,p}-\widehat\phi^{a}_{m_\star,p}\|_\infty.
+\]
+Thus GPU approximation is compared only with GPU FP32 degree-exact output,
+and CPU approximation only with CPU FP64 degree-exact output. These are
+full degree-exact rules with 27,338 and 198,033 nodes, respectively; the
+CPU references are newly measured rather than replaced with smaller-node
+FP64 proxies. A patient passes if its maximum absolute feature-wise
+discrepancy is at most its requested tolerance. Exact-row discrepancies
+are zero by self-comparison and do not assert zero rounding error.
+
+For the exact real-arithmetic Shapley vector $\phi_p$ and its quadrature
+approximation $\phi_{m_p,p}$, the analytical node selector instead guarantees
+\[
+\|\phi_{m_p,p}-\phi_p\|_\infty\le C_p\le\varepsilon,
+\qquad C_{\max}=\max_{p=1,\ldots,5}C_p.
+\]
+This bound can be conservative: the actual quadrature error need not be
+close to either $C_p$ or $\varepsilon$. However, both computed vectors in
+$\Delta_a$ also contain floating-point error. Consequently, a discrepancy
+above $\varepsilon$ need not contradict the quadrature certificate, while
+a discrepancy below $\varepsilon$ does not independently establish an
+absolute error guarantee for either computed vector.
+
+To avoid choosing unnecessarily many nodes, the implementation searches
+integer node counts $m=1,2,\ldots$ and returns the first whose analytical
+bound meets the requested tolerance; the degree-exact threshold is the
+fallback cap. Evaluating the bound for each candidate requires optimizing
+an auxiliary scalar that controls the bound. This inner optimization solves
+its scalar stationarity equation by bisection, repeatedly halving an interval
+containing the root. The separate \texttt{closed\_form\_budget} calculation
+is recorded as a diagnostic and does not select the node count used in
+these experiments. Timed automatic node selection includes both the
+patient/background factor-summary pass and this integer search.
+
+\paragraph{Implementation and timing.}
+GPU explanations use JAX-Metal FP32; CPU explanations use JAX with FP64
+enabled. Both evaluate the same parallel product-game formula, use an
+8\,GiB memory-planning budget and one background row per block, and
+accumulate returned blocks on the host in FP64. The memory setting is a
+planning budget, not a measurement of actual allocation.
+Each table entry summarizes five distinct held-out patients, with one
+timed explanation per patient and method. We report the arithmetic mean
+and sample standard deviation across those patients. This variation is
+not repeated-run uncertainty and does not establish statistical significance.
+
+GPU exact and approximate measurements are reused from the matched saved
+experiments, and CPU approximate timings reuse the warmed CPU FP64 sweep.
+The full degree-exact CPU runs are new. Model coefficients, preprocessing,
+background and held-out rows, numerical source hashes, and package versions
+are verified to match. Timings exclude rule construction and recorded
+warm-up. CPU degree-exact computation uses a checkpointed integration loop
+with the same factors, node order, and background/block accumulation order
+as the public API; a small synthetic comparison was bitwise identical.
+Before each dataset, one actual node block with the full exact-core shape
+is evaluated for warm-up, followed by three pilot core calls. These calls
+are excluded; the warm-up is not a full degree-exact explanation.
+The reported CPU exact time sums active integration, including factor
+preparation, block planning, transfers, synchronized core evaluation, and
+host accumulation. Checkpoint I/O is measured separately and excluded;
+if resumed, inactive downtime and uncheckpointed work lost to interruption
+are also excluded. Thus this timing is not an undifferentiated process
+wall-clock measurement.
+Approximate API timings include automatic node selection as well as
+explanation, synchronization, transfers and host work. Measurements were
+recorded in separate runs. GPU FP32 versus CPU FP64 changes both device
+and precision, so their latency ratio is not a matched-precision GPU speedup.
+
+The quadrature nodes and weights are cached across patients. Previously
+measured CPU construction of the exact GSE24080 and TCGA rules required
+10.97\,s and 561.92\,s, respectively; the latest approximate rules required
+0.386--0.563\,ms (range of medians over five fresh constructions per rule).
+These setup costs are separate from explanation latency. Caching rules
+does not remove evaluations of the patient- and background-dependent
+integrands at those nodes.
+
+\paragraph{Numerical interpretation and scope.}
+All 30 selected approximate rules satisfy $C_p\le\varepsilon$.
+GPU FP32 meets its same-backend discrepancy threshold in 26/30
+cases, while CPU FP64 meets it in 30/30 cases.
+The largest CPU discrepancy across patients, features, and the three
+tolerances is $2.44\times10^{-7}$.
+The CPU FP64 results provide empirical evidence that the selected rules
+agree closely with full degree-exact quadrature at higher precision.
+They must be paired with the CPU runtime, not assigned to GPU FP32 timing.
+The numerical-reference convention in this table is distinct from earlier
+checks against a shared, independently implemented 64-node FP64 reference.
+Those checks and the separate CPU FP32 control are retained as diagnostic
+artifacts; they are not the definitions of either discrepancy reported here.
+
+Finally, the explanations concern the fitted relative-hazard model and the
+fixed uniform distribution on the 30 selected background rows. The
+certificate does not quantify model-estimation uncertainty, uncertainty
+from choosing a finite background sample, or discrepancy from a population
+background distribution. The survival datasets demonstrate computational
+feasibility in a small-$n$, large-$d$ setting; these experiments do not
+establish clinical usefulness or causal interpretation of the attributions.

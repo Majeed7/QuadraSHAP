@@ -1,0 +1,75 @@
+{
+  "dataset": "tcga_lgg_methylation",
+  "patient": 0,
+  "patient_id": "TCGA-CS-6665",
+  "d": 396065,
+  "background_size": 383,
+  "m_q": 198033,
+  "exact_nodes": 198033,
+  "exact_degree": true,
+  "backend": "logspace_jax",
+  "memory_budget": "8GB",
+  "block_size": 1,
+  "source_sha256": {
+    "src/quadrashap/product_games/shapley.py": "d2a9c2fe3eaf8c74f1febd190115fdd78f3c698b3a3bdb03278914404b200736",
+    "src/quadrashap/product_games/blocks.py": "e363268f5ab10e251ce5e07374cd79660029e0d9935c77d9f3dfe0a30ff81884",
+    "src/quadrashap/multiplicative/engine.py": "24a60d0b9afb1389b5a8678ad0a9e13f8151aa35fb9c1ef79728eec381a9aa1d",
+    "src/quadrashap/multiplicative/glm.py": "ec77e7d21240cd99b80f59b3e2ec172498ef0fb8ccfef7ee35e252d55032adb9",
+    "benchmarks/cox_full_exact_gpu.py": "6e5411e28dd42905c34770b99c916a488a094137a054ce86ed5ff72348323e4a"
+  },
+  "input_sha256": {
+    "benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/inputs.npz": "ce572983d011386ddb3bf3b2d746318700b8362c7431e148bb90eb3ce771bf99",
+    "benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/training_background.npy": "43fbc85eab1d06112361fd97ced5bd4b5b08a313beea84599f91a0bfc21dcc01",
+    "benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/reference_full_64.npy": "66e0f027aa7752e3e0f1abee1cde0446e09803dba937b78e618a8c0b44c7ccc2"
+  },
+  "rule_sha256": "42abcb8ddc38af1a000d5746f66ed229d3ba6a17fb2c806643c36b5fa8ae6b5e",
+  "packages": {
+    "jax": "0.4.34",
+    "jaxlib": "0.4.34",
+    "numpy": "1.26.4",
+    "scipy": "1.17.1",
+    "pandas": "3.0.5",
+    "scikit-survival": "0.26.0",
+    "jax-metal": "0.1.1"
+  },
+  "device": [
+    "METAL:0"
+  ],
+  "blas_threads": 4,
+  "repeats": 1,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 383,
+    "m_q": 198033,
+    "d": 396065,
+    "block_size": 1,
+    "node_block": 541,
+    "n_blocks": 383,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 8589870704,
+    "full_peak_bytes": 1201617064599696,
+    "mode": "fixed"
+  },
+  "integration_seconds": 870.6496079148783,
+  "checkpoint_io_seconds": 0.08292487607104704,
+  "active_integration_wall_seconds": 870.7325327909493,
+  "attempts": 1,
+  "rule_preparation": {
+    "source": "benchmarks/results/cox_survival/tcga_lgg_methylation/exact_quadrature_rule.npz",
+    "sha256": "42abcb8ddc38af1a000d5746f66ed229d3ba6a17fb2c806643c36b5fa8ae6b5e",
+    "m_q": 198033,
+    "preparation": "Loaded saved rule",
+    "fresh_rule_seconds": null,
+    "preparation_wall_seconds": 0.010030292003648356,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 1.0345127532396248e-11
+  },
+  "timing_scope": "Factor preparation, planning, GPU transfers/JIT/core, synchronized host float64 accumulation; excludes explainer construction, rule preparation, checkpoint IO, validation and resume input loads",
+  "resume_timing_scope": "Accumulated recorded active work across attempts; excludes downtime and any uncheckpointed work lost to interruption",
+  "reference": "Independent float64 64-node quadrature with certified bound <1e-10; NOT exact-degree reference",
+  "qualification": "Full exact-degree quadrature in real arithmetic; GPU FP32 with host FP64 block accumulation",
+  "efficiency_residual": 50.30941254924983,
+  "relative_l2_error": 1.5879052274581993e-05,
+  "max_absolute_error": 0.10419622695553699,
+  "top20_overlap": 1.0
+}

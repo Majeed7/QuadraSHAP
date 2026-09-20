@@ -1,0 +1,11 @@
+{
+  "wall_seconds": 203.2148860830057,
+  "cases": 18,
+  "calls": 72,
+  "patients_per_dataset": 3,
+  "background": "all training patients, uniformly weighted",
+  "memory_budget": "8GB",
+  "block_size": 1,
+  "table_aggregation": "mean and sample SD across the three per-patient median warm call times",
+  "reference": "Independent FP64 64-node quadrature with certified bound <1e-10; patient0 crosschecked at96 nodes"
+}

@@ -1,0 +1,20 @@
+{
+  "source": "benchmarks/results/cox_survival/tcga_lgg_methylation/exact_quadrature_rule.npz",
+  "sha256": "42abcb8ddc38af1a000d5746f66ed229d3ba6a17fb2c806643c36b5fa8ae6b5e",
+  "m_q": 198033,
+  "preparation": "Loaded saved rule",
+  "fresh_rule_seconds": null,
+  "preparation_wall_seconds": 0.013478624983690679,
+  "symmetry_max_error": 0.0,
+  "moment_max_error": 1.0345127532396248e-11,
+  "original_preparation": {
+    "source": "benchmarks/results/cox_survival/tcga_lgg_methylation/exact_quadrature_rule.npz",
+    "sha256": "42abcb8ddc38af1a000d5746f66ed229d3ba6a17fb2c806643c36b5fa8ae6b5e",
+    "m_q": 198033,
+    "preparation": "Loaded saved rule",
+    "fresh_rule_seconds": null,
+    "preparation_wall_seconds": 0.010030292003648356,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 1.0345127532396248e-11
+  }
+}

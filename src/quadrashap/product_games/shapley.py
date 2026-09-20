@@ -21,6 +21,8 @@ the product game of Definition 1, ``v(S) = prod_{j in S} u_j``.  Fixing
 and averaging over background rows gives the empirical interventional value
 function (Section 4 of the paper); both are handled by the callers.
 """
+from functools import lru_cache
+
 import numpy as np
 
 # Optional JAX support
@@ -34,14 +36,26 @@ except Exception:
     JAX_AVAILABLE = False
 
 
+@lru_cache(maxsize=16)
 def _gauss_legendre_01_numpy(m_q: int, dtype=np.float64):
     """
     Gauss–Legendre nodes/weights mapped from [-1,1] to [0,1].
     """
-    x, w = np.polynomial.legendre.leggauss(m_q)
+    if not isinstance(m_q, (int, np.integer)) or m_q < 1:
+        raise ValueError("m_q must be a positive integer")
+    if m_q <= 256:
+        x, w = np.polynomial.legendre.leggauss(m_q)
+    else:
+        # NumPy's dense companion matrix is prohibitive at genomics-scale d/2.
+        # SciPy's tridiagonal construction uses linear working memory instead.
+        from scipy.special import roots_legendre
+        x, w = roots_legendre(m_q)
     x = 0.5 * (x + 1.0)
     w = 0.5 * w
-    return x.astype(dtype, copy=False), w.astype(dtype, copy=False)
+    x, w = x.astype(dtype, copy=False), w.astype(dtype, copy=False)
+    x.setflags(write=False)
+    w.setflags(write=False)
+    return x, w
 
 
 def _absent_factors_numpy(K: np.ndarray, Ut):
@@ -203,9 +217,7 @@ if JAX_AVAILABLE:
             K = np.asarray(K)
             Ut = _absent_factors_numpy(K, Ut)
 
-            x_np, w_np = np.polynomial.legendre.leggauss(m_q)
-            x_np = 0.5 * (x_np + 1.0)
-            w_np = 0.5 * w_np
+            x_np, w_np = _gauss_legendre_01_numpy(m_q)
 
             dtype = _jax_work_dtype(K)
             if K.dtype != dtype:
@@ -223,6 +235,20 @@ if JAX_AVAILABLE:
                 blk = self._phi_prefix_core(Kj, Utj, jnp.asarray(xb, dtype=dtype), jnp.asarray(wb, dtype=dtype))
                 out = blk if out is None else out + blk
             return np.asarray(out)
+
+        @staticmethod
+        @jax.jit
+        def _phi_logspace_parallel_core(K, Ut, x, w, eps):
+            # Reduce independent features in parallel on the accelerator. A
+            # sequential lax.scan over hundreds of thousands of features can
+            # exceed Metal's command-buffer execution limit.
+            factors = Ut[None, :, :] + x[:, None, None] * K[None, :, :]
+            signs = jnp.sign(factors)
+            logs = jnp.log(jnp.maximum(jnp.abs(factors), eps))
+            log_product = logs.sum(axis=2, keepdims=True)
+            sign_product = signs.prod(axis=2, keepdims=True)
+            leave_one_out = sign_product * signs * jnp.exp(log_product - logs)
+            return K * (w[:, None, None] * leave_one_out).sum(axis=0)
 
         @staticmethod
         @jax.jit
@@ -259,24 +285,33 @@ if JAX_AVAILABLE:
             # vmap over d columns, result (d, m), then transpose to (m, d)
             return jax.vmap(per_feature, in_axes=(0, 0))(K.T, Ut.T).T
 
-        def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-100) -> np.ndarray:
+        def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-100,
+                                node_block: int | None = None) -> np.ndarray:
             K = np.asarray(K)
             Ut = np.broadcast_to(_absent_factors_numpy(K, Ut), K.shape)
 
-            x_np, w_np = np.polynomial.legendre.leggauss(m_q)
-            x_np = 0.5 * (x_np + 1.0)
-            w_np = 0.5 * w_np
+            x_np, w_np = _gauss_legendre_01_numpy(m_q)
 
             dtype = _jax_work_dtype(K)
             if K.dtype != dtype:
                 K = K.astype(dtype, copy=False)
-            x = jnp.asarray(x_np, dtype=dtype)
-            w = jnp.asarray(w_np, dtype=dtype)
             Kj = jnp.asarray(K, dtype=dtype)
             Utj = jnp.asarray(Ut, dtype=dtype)
-
-            out = self._phi_logspace_core(Kj, Utj, x, w, eps)
-            return np.asarray(out)
+            nb = m_q if node_block is None else max(1, min(int(node_block), m_q))
+            core = (self._phi_logspace_core if jax.default_backend().lower() == "cpu"
+                    else self._phi_logspace_parallel_core)
+            # GPU arithmetic remains float32 on Metal. Accumulate node blocks
+            # in host float64 to avoid another rounding drift in very long rules.
+            out = np.zeros(K.shape, dtype=np.float64)
+            for q0 in range(0, m_q, nb):
+                xb, wb = x_np[q0:q0 + nb], w_np[q0:q0 + nb]
+                if xb.shape[0] < nb:
+                    pad = nb - xb.shape[0]
+                    xb = np.concatenate([xb, np.full(pad, 0.5)])
+                    wb = np.concatenate([wb, np.zeros(pad)])
+                blk = core(Kj, Utj, jnp.asarray(xb, dtype=dtype), jnp.asarray(wb, dtype=dtype), eps)
+                out += np.asarray(blk)
+            return out
 else:
     class ProductGamesShapleyJax:
         def __init__(self):

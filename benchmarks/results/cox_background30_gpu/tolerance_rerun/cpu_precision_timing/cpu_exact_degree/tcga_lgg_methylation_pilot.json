@@ -1,0 +1,38 @@
+{
+  "warmup_seconds": 0.35764266600017436,
+  "pilot_core_seconds": [
+    0.3334194170020055,
+    0.32767191700986587,
+    0.32795408301171847
+  ],
+  "core_calls_per_patient": 11010,
+  "projected_seconds_per_patient": 3610.7744539590203,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 30,
+    "m_q": 198033,
+    "d": 396065,
+    "block_size": 1,
+    "node_block": 541,
+    "n_blocks": 30,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 8589870704,
+    "full_peak_bytes": 94121441091360,
+    "mode": "fixed"
+  },
+  "core_dtype": "float64",
+  "warmup_protocol": "One synchronized real first-background node block with the full exact core shape; three additional pilot calls excluded from integration timing",
+  "rule": {
+    "exact_nodes": 198033,
+    "source": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_survival/tcga_lgg_methylation/exact_quadrature_rule.npz",
+    "source_sha256": "42abcb8ddc38af1a000d5746f66ed229d3ba6a17fb2c806643c36b5fa8ae6b5e",
+    "original_construction_seconds": 561.9232772920004,
+    "cached_rule_load_seconds": 0.006140666984720156,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 1.0345127532396248e-11
+  },
+  "rule_validation": {
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 1.0345127532396248e-11
+  }
+}

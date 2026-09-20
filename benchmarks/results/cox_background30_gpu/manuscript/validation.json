@@ -1,0 +1,17 @@
+{
+  "basis": "Completed B30 five-patient benchmark; no GPU reruns for manuscript generation",
+  "absolute_error_metric": "maximum over patients of maximum feature-wise absolute difference to same-patient degree-exact GPU output",
+  "direct_attribution_array_audit": "all 30 differences matched the saved comparison CSV",
+  "latex_numeric_validation": "All six bound/error pairs and eight timing summaries match source data at displayed precision",
+  "latexmk_exit_code": 0,
+  "idempotent_rebuild": true,
+  "undefined_references_or_citations": false,
+  "box_warnings": false,
+  "visual_review": "Both pages checked; no clipping, overlaps, or broken notation",
+  "sha256": {
+    "benchmarks/results/cox_background30_gpu/manuscript/cox_high_dimensional_table.tex": "f444685e78fc2b8257da0c300859a5feb3d59fbd9e59d94aa768ef026802259c",
+    "benchmarks/results/cox_background30_gpu/manuscript/cox_high_dimensional_subsection.tex": "db068f16dbcb19e1bd69104d3d5d27b769835134ed01efff4e16c98699039220",
+    "benchmarks/results/cox_background30_gpu/manuscript/cox_high_dimensional_sources.bib": "099f489def41ac934ee2f1062d97256d20846d4213afdef6554d8086b28cf04d",
+    "output/pdf/cox_high_dimensional_writeup.pdf": "24c7142aa015a90538fc2979adb81634aaf1c90d326d4fee14cda964331d76f5"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "python": "3.13.15",
+  "executable": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/.venv/bin/python",
+  "packages": {
+    "numpy": "2.5.2",
+    "scipy": "1.18.1",
+    "pandas": "3.0.5"
+  },
+  "purpose": "CPU environment used to prepare held-out inputs and independent FP64 accuracy references; excluded from GPU timings",
+  "sha256": {
+    "benchmarks/cox_float64_reference.py": "151e4dbe23a40ae6de0cdda29e520a69671069a5916f11571cf42008458c51e7",
+    "benchmarks/experiment_data.py": "7b8ab9600f8c2dcbe714641c67a121d4e8478ac02e9ee39233addf2093b7b0a6",
+    "benchmarks/results/cox_background30_gpu/tcga_lgg_methylation/reference_64.npy": "23493d44913978888df5a26b6d0323005bcfc234ad724f7920922655ec5d8329",
+    "benchmarks/results/cox_background30_gpu/gse24080/reference_64.npy": "4a64ac6c6438b8e44e8226cab18132e0240799f243e89c7958dae77df647ad14",
+    "benchmarks/results/cox_background30_gpu/tcga_lgg_methylation/reference_96_patient_0.npy": "94357adc35fca83fecc650ee34f69c9d72ec031255919002be67368d4ec064bf",
+    "benchmarks/results/cox_background30_gpu/gse24080/reference_96_patient_0.npy": "d18c629ae75bd22179140e1e67f6f67c9ff045ea5131e04919ba2265654717b5"
+  }
+}

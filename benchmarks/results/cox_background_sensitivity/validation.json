@@ -1,0 +1,15 @@
+{
+  "configurations": 26,
+  "recorded_calls": 104,
+  "all_saved_attributions_finite": true,
+  "saved_metrics_recomputed_and_verified": true,
+  "warm_medians_verified_against_raw_times": true,
+  "gpu_absolute_tolerance_failures": 16,
+  "float64_reference_tests_passed": 2,
+  "full_exact_rule_rerun_for_enlarged_background": false,
+  "source_sha256": {
+    "benchmarks/cox_background_experiment.py": "7614f2e77528c7ec3e87fa64da5e6f5de06c4f26c80bfb1e19e9e1d493b27963",
+    "benchmarks/cox_background_report.py": "e1ad01894cb5ccb2d366d745b1bcfb50752e4678d1d6e328b6970639a08e6a6c",
+    "benchmarks/cox_float64_reference.py": "151e4dbe23a40ae6de0cdda29e520a69671069a5916f11571cf42008458c51e7"
+  }
+}

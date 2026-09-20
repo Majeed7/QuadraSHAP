@@ -1,0 +1,92 @@
+{
+  "gse24080": {
+    "dataset": "gse24080",
+    "n_train": 339,
+    "n_test": 214,
+    "d": 54675,
+    "background_size": 100,
+    "selection_seed": 42,
+    "selection": "First 100 entries of the saved seed-42 permutation of training rows, without replacement",
+    "nesting": "First 30 background rows, indices and dataset rows exactly equal the saved B=30 study",
+    "background_weights": "Uniform, 1/100 per background patient",
+    "patient_ids": [
+      "16574",
+      "16570",
+      "16518",
+      "16600",
+      "9995"
+    ],
+    "test_rows": [
+      42,
+      44,
+      45,
+      46,
+      47
+    ],
+    "patient_selection": "Same five held-out patients and preprocessed inputs as the saved B=30 study",
+    "test_data_used_for_background": false,
+    "model_refitted": false,
+    "model_sha256": "49cdc857a7984d7d8b44af9266587ecde58eed713110fa0d46064e623c9019bd",
+    "source_sha256": {
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background30_gpu/design.json": "c76cdd24ce629a7a5304843d20c7befff6904b71fa32b1d16a005bd11172f75e",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background30_gpu/gse24080/inputs.npz": "a80eb70b1029bb1d25b3d337b9df20314beaef95519f44387a4fb7cc261f2f3f",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/design.json": "2a933db6a1cb3695eb7280b9cb15e5ce65f9e8bcfdd2195bb416e78d7305f501",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/inputs.npz": "d21c465e7d8b9d69fde6a649cb53b1349a1e21928c7f4f19bb58a0b1d587af7f",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/training_background.npy": "ab7f71060131fb3bd744f1a74a5e4afa846f92ec224c29d04a7f54b84d262832",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/background_selection.csv": "a6b6fc3c8a0b47fbbbe565fb23bc8c8ba0fc69eb3aa122c5064dff53cb2993d0",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/gse24080/model_and_preprocessing.npz": "49cdc857a7984d7d8b44af9266587ecde58eed713110fa0d46064e623c9019bd",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/gse24080/explanation_inputs.npz": "31a0a1ac33e43f0465d97a8a146ab95f129ac06763b227f4b47079da24338b64"
+    },
+    "preparation_script_sha256": "29a225288e4f9ee5af5d391609ca6a37baa59ba71840ff6f95f3842f981cbd33",
+    "prepared_inputs_sha256": "b54ac68e45ea0f3ee20a70dc1f346453cb32d15ef0e9e6805b598a7daf638d1b",
+    "selection_sha256": {
+      "background_selection.csv": "f18fbee32f986c6115a251d91373e85ea39fc5a3f46c85a04724859e2af09b1e",
+      "patient_selection.csv": "c221ce0b7be21900deb18b859e43556adb5cb767e1418bca0d92bcbc01420120"
+    }
+  },
+  "tcga_lgg_methylation": {
+    "dataset": "tcga_lgg_methylation",
+    "n_train": 383,
+    "n_test": 128,
+    "d": 396065,
+    "background_size": 100,
+    "selection_seed": 42,
+    "selection": "First 100 entries of the saved seed-42 permutation of training rows, without replacement",
+    "nesting": "First 30 background rows, indices and dataset rows exactly equal the saved B=30 study",
+    "background_weights": "Uniform, 1/100 per background patient",
+    "patient_ids": [
+      "TCGA-CS-6665",
+      "TCGA-DU-A5TS",
+      "TCGA-HT-8113",
+      "TCGA-DH-A66G",
+      "TCGA-E1-A7YE"
+    ],
+    "test_rows": [
+      2,
+      9,
+      17,
+      18,
+      24
+    ],
+    "patient_selection": "Same five held-out patients and preprocessed inputs as the saved B=30 study",
+    "test_data_used_for_background": false,
+    "model_refitted": false,
+    "model_sha256": "78e49f60b47ec388b0d56afd24e95bb529e63e20869d2220cc07de3d014fc035",
+    "source_sha256": {
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background30_gpu/design.json": "c76cdd24ce629a7a5304843d20c7befff6904b71fa32b1d16a005bd11172f75e",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background30_gpu/tcga_lgg_methylation/inputs.npz": "ec2918087848fd19b8b65c3ce223278d6dead648291923c6ccb9c67ef102dc56",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/design.json": "564cd0f9349beeb3f370a060ebd24691b0fd38b2644dfedbe7f3c4aa1c5e248b",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/inputs.npz": "ce572983d011386ddb3bf3b2d746318700b8362c7431e148bb90eb3ce771bf99",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/training_background.npy": "43fbc85eab1d06112361fd97ced5bd4b5b08a313beea84599f91a0bfc21dcc01",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/tcga_lgg_methylation/background_selection.csv": "8f8d4e1112b248378801f5cfa4497c4aa595e2d59d64f32f9dc36653b2a68f94",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/tcga_lgg_methylation/model_and_preprocessing.npz": "78e49f60b47ec388b0d56afd24e95bb529e63e20869d2220cc07de3d014fc035",
+      "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/tcga_lgg_methylation/explanation_inputs.npz": "8a1e4f97994d3e57f363d72e4851c79cc7457a14625db740defb5caeea799de1"
+    },
+    "preparation_script_sha256": "29a225288e4f9ee5af5d391609ca6a37baa59ba71840ff6f95f3842f981cbd33",
+    "prepared_inputs_sha256": "d6b05226003078e88450a818c0912e6da764eecab3a4ce7464f14c00c6fa867d",
+    "selection_sha256": {
+      "background_selection.csv": "b16b05a5f977d8d159eb386923c3c89e7c19cc35ecb2905f4daa8a983afcc1e1",
+      "patient_selection.csv": "3e49a5259f42dcaef80fda5a3a62b95d1480233ce4ffbf1af4df18c06843822a"
+    }
+  }
+}

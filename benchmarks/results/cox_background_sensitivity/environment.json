@@ -1,0 +1,38 @@
+{
+  "utc": "2026-09-14T01:41:07.896597+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.12.14",
+  "executable": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/.venv-metal/bin/python",
+  "devices": [
+    "METAL:0"
+  ],
+  "backend": "METAL",
+  "jit_disabled": false,
+  "blas": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 4,
+      "prefix": "libopenblas",
+      "filepath": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/.venv-metal/lib/python3.12/site-packages/numpy/.dylibs/libopenblas64_.0.dylib",
+      "version": "0.3.23.dev",
+      "threading_layer": "pthreads",
+      "architecture": "armv8"
+    }
+  ],
+  "packages": {
+    "jax": "0.4.34",
+    "jaxlib": "0.4.34",
+    "numpy": "1.26.4",
+    "scipy": "1.17.1",
+    "pandas": "3.0.5",
+    "scikit-survival": "0.26.0",
+    "jax-metal": "0.1.1"
+  },
+  "source_sha256": {
+    "src/quadrashap/product_games/shapley.py": "d2a9c2fe3eaf8c74f1febd190115fdd78f3c698b3a3bdb03278914404b200736",
+    "src/quadrashap/product_games/blocks.py": "e363268f5ab10e251ce5e07374cd79660029e0d9935c77d9f3dfe0a30ff81884",
+    "src/quadrashap/multiplicative/engine.py": "24a60d0b9afb1389b5a8678ad0a9e13f8151aa35fb9c1ef79728eec381a9aa1d",
+    "src/quadrashap/multiplicative/glm.py": "ec77e7d21240cd99b80f59b3e2ec172498ef0fb8ccfef7ee35e252d55032adb9"
+  }
+}

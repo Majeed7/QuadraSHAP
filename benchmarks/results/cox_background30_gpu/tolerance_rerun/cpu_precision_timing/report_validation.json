@@ -1,0 +1,8 @@
+{
+  "data_validation": "30 GPU, 60 fresh CPU, 10 matched exact GPU cases; array errors, raw timings and provenance verified",
+  "independent_cpu_audit": "60 CPU errors independently recomputed; node/block plans matched; 30 measured calls and 21 warmups per precision",
+  "cpu_fp64_attributions": "bitwise identical to prior untimed-diagnostic outputs",
+  "latex": "exit 0, idempotent rebuild, no warnings or unresolved references",
+  "visual_review": "Both final pages reviewed, no clipping or overlap",
+  "pdf": "output/pdf/cox_cpu_gpu_precision.pdf"
+}

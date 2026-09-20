@@ -28,7 +28,8 @@ def environment():
                          ("numpy", "scipy", "pandas", "scikit-learn", "scikit-survival", "matplotlib")}}
 
 
-def fit_dataset(name, output, *, seed=42, background_size=4, n_explain=3, ridge_per_feature=0.01):
+def fit_dataset(name, output, *, seed=42, background_size=4, n_explain=3, ridge_per_feature=0.01,
+                explainer_backend=None):
     started = perf_counter()
     output = Path(output) / name
     output.mkdir(parents=True, exist_ok=True)
@@ -61,8 +62,13 @@ def fit_dataset(name, output, *, seed=42, background_size=4, n_explain=3, ridge_
     # Fixed first validation rows: selection does not depend on outcomes or risk.
     selected_test = np.arange(min(n_explain, len(test)))
     tick = perf_counter()
-    explainer = CoxPHExplainer(model.coef_, X_train[selected_background],
-                               node_block_size=max(1, min(64, 32 * 1024**2 // (8 * d))))
+    node_block_size = max(1, min(64, 32 * 1024**2 // (8 * d)))
+    if explainer_backend is None:
+        explainer = CoxPHExplainer(model.coef_, X_train[selected_background], node_block_size=node_block_size)
+    else:
+        from quadrashap import CoxExplainer
+        explainer = CoxExplainer(model, background=X_train[selected_background], backend=explainer_backend,
+                                 memory_budget="512MB")
     explainer_seconds = perf_counter() - tick
     features = data.feature_names[preprocessor.keep]
     summary = {"dataset": name, "n": len(data.y), "n_train": len(train), "n_test": len(test),
@@ -74,7 +80,9 @@ def fit_dataset(name, output, *, seed=42, background_size=4, n_explain=3, ridge_
                "penalty_tuning": "Fixed in advance; no hyperparameter search", "ties": "Breslow",
                "train_c_index": float(train_c), "test_c_index": float(test_c),
                "background_size": background_size, "n_explain": len(selected_test),
-               "exact_nodes": explainer.exact_nodes, "node_block_size": explainer.node_block_size,
+               "exact_nodes": max(1, (d + 1) // 2),
+               "node_block_size": node_block_size if explainer_backend is None else "auto",
+               "explainer_api": "CoxPHExplainer" if explainer_backend is None else "CoxExplainer",
                "load_seconds": load_seconds, "preprocessing_seconds": preprocessing_seconds,
                **model.timings_, "scoring_seconds": scoring_seconds, "explainer_setup_seconds": explainer_seconds,
                "fit_workflow_seconds": perf_counter() - started}

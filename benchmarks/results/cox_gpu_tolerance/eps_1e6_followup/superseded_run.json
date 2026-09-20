@@ -1,0 +1,13 @@
+{
+  "status": "stopped_at_user_request",
+  "reason": "User requested30backgroundpatientsand5timingrepeatsinstead",
+  "process_exited": true,
+  "completed_exact_cases": [
+    "gse24080:0",
+    "gse24080:1",
+    "gse24080:2",
+    "tcga_lgg_methylation:0"
+  ],
+  "partial_checkpoint": "tcga_lgg_methylation/patient_1/exact_checkpoint.npz",
+  "replacement_results": "benchmarks/results/cox_background30_gpu"
+}

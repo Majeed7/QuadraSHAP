@@ -1,0 +1,22 @@
+{
+  "gse24080": {
+    "exact_nodes": 27338,
+    "source": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/eps_1e6_followup/gse24080/quadrature_rule.npz",
+    "source_sha256": "f74e19d24dc21056f1446d8f91fb069fa1c86e21c2c47114b58ddfe0eb53cd79",
+    "original_construction_seconds": 10.97469870900386,
+    "cached_rule_load_seconds": 0.0007164579874370247,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 5.572833861045012e-13,
+    "construction_timing_provenance": "Historical saved rule; not newly constructed for B100"
+  },
+  "tcga_lgg_methylation": {
+    "exact_nodes": 198033,
+    "source": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_survival/tcga_lgg_methylation/exact_quadrature_rule.npz",
+    "source_sha256": "42abcb8ddc38af1a000d5746f66ed229d3ba6a17fb2c806643c36b5fa8ae6b5e",
+    "original_construction_seconds": 561.9232772920004,
+    "cached_rule_load_seconds": 0.005362208990845829,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 1.0345127532396248e-11,
+    "construction_timing_provenance": "Historical saved rule; not newly constructed for B100"
+  }
+}

@@ -1,0 +1,78 @@
+[
+  {
+    "memory_budget": "512MB",
+    "first_seconds": 3.595478999981424,
+    "warm_seconds": 3.530413166998187,
+    "relative_difference_from_512MB": 0.0,
+    "plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 32,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 32,
+      "n_blocks": 32,
+      "budget_bytes": 536870912,
+      "estimated_peak_bytes": 525975088,
+      "full_peak_bytes": 519739459072,
+      "mode": "blocked"
+    }
+  },
+  {
+    "memory_budget": "1GB",
+    "first_seconds": 2.1278403750038706,
+    "warm_seconds": 2.1753777919802815,
+    "relative_difference_from_512MB": 2.6282374082988407e-08,
+    "plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 32,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 1,
+      "node_block": 66,
+      "n_blocks": 32,
+      "budget_bytes": 1073741824,
+      "estimated_peak_bytes": 1064624304,
+      "full_peak_bytes": 519739459072,
+      "mode": "blocked"
+    }
+  },
+  {
+    "memory_budget": "2GB",
+    "first_seconds": 4.303734916000394,
+    "warm_seconds": 4.111613540997496,
+    "relative_difference_from_512MB": 1.6265167037335274e-08,
+    "plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 32,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 32,
+      "node_block": 3,
+      "n_blocks": 1,
+      "budget_bytes": 2147483648,
+      "estimated_peak_bytes": 2129247744,
+      "full_peak_bytes": 519739459072,
+      "mode": "blocked"
+    }
+  },
+  {
+    "memory_budget": "4GB",
+    "first_seconds": 2.05058608300169,
+    "warm_seconds": 2.04968679198646,
+    "relative_difference_from_512MB": 1.720579461147871e-08,
+    "plan": {
+      "backend": "logspace_jax",
+      "n_pairs": 32,
+      "m_q": 1024,
+      "d": 396065,
+      "block_size": 32,
+      "node_block": 7,
+      "n_blocks": 1,
+      "budget_bytes": 4294967296,
+      "estimated_peak_bytes": 4157103616,
+      "full_peak_bytes": 519739459072,
+      "mode": "blocked"
+    }
+  }
+]

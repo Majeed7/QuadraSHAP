@@ -1,0 +1,11 @@
+dataset,patient,cpu_degree_exact_vs_independent_fp64_reference,gpu_degree_exact_vs_independent_fp64_reference,purpose
+gse24080,0,1.479236289014807e-09,0.0015589831931777098,Separate numerical audit; not either Delta column in the main table
+gse24080,1,1.4935608305677306e-09,0.0017955293085378798,Separate numerical audit; not either Delta column in the main table
+gse24080,2,2.0116885934839956e-09,0.0017338680359841874,Separate numerical audit; not either Delta column in the main table
+gse24080,3,1.8024763903667917e-09,0.0013719317571769807,Separate numerical audit; not either Delta column in the main table
+gse24080,4,2.348485850234283e-09,0.0018736903134026761,Separate numerical audit; not either Delta column in the main table
+tcga_lgg_methylation,0,5.8221644394507166e-08,0.00518344237468682,Separate numerical audit; not either Delta column in the main table
+tcga_lgg_methylation,1,2.441390734020388e-07,0.03315171195345101,Separate numerical audit; not either Delta column in the main table
+tcga_lgg_methylation,2,6.073190661481931e-08,0.008889465921299688,Separate numerical audit; not either Delta column in the main table
+tcga_lgg_methylation,3,3.876272103298106e-08,0.002851666764939864,Separate numerical audit; not either Delta column in the main table
+tcga_lgg_methylation,4,1.0431062946736347e-07,0.007489886288340131,Separate numerical audit; not either Delta column in the main table

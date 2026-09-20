@@ -1,0 +1,75 @@
+{
+  "dataset": "gse24080",
+  "patient": 0,
+  "patient_id": "16574",
+  "d": 54675,
+  "background_size": 339,
+  "m_q": 27338,
+  "exact_nodes": 27338,
+  "exact_degree": true,
+  "backend": "logspace_jax",
+  "memory_budget": "8GB",
+  "block_size": 1,
+  "source_sha256": {
+    "src/quadrashap/product_games/shapley.py": "d2a9c2fe3eaf8c74f1febd190115fdd78f3c698b3a3bdb03278914404b200736",
+    "src/quadrashap/product_games/blocks.py": "e363268f5ab10e251ce5e07374cd79660029e0d9935c77d9f3dfe0a30ff81884",
+    "src/quadrashap/multiplicative/engine.py": "24a60d0b9afb1389b5a8678ad0a9e13f8151aa35fb9c1ef79728eec381a9aa1d",
+    "src/quadrashap/multiplicative/glm.py": "ec77e7d21240cd99b80f59b3e2ec172498ef0fb8ccfef7ee35e252d55032adb9",
+    "benchmarks/cox_full_exact_gpu.py": "6e5411e28dd42905c34770b99c916a488a094137a054ce86ed5ff72348323e4a"
+  },
+  "input_sha256": {
+    "benchmarks/results/cox_background_sensitivity/gse24080/inputs.npz": "d21c465e7d8b9d69fde6a649cb53b1349a1e21928c7f4f19bb58a0b1d587af7f",
+    "benchmarks/results/cox_background_sensitivity/gse24080/training_background.npy": "ab7f71060131fb3bd744f1a74a5e4afa846f92ec224c29d04a7f54b84d262832",
+    "benchmarks/results/cox_background_sensitivity/gse24080/reference_full_64.npy": "90ee8ae58e21a4aedc81e5b5e1c11ab6b2d8702e2afd5eee66869edb1521f6ba"
+  },
+  "rule_sha256": "f74e19d24dc21056f1446d8f91fb069fa1c86e21c2c47114b58ddfe0eb53cd79",
+  "packages": {
+    "jax": "0.4.34",
+    "jaxlib": "0.4.34",
+    "numpy": "1.26.4",
+    "scipy": "1.17.1",
+    "pandas": "3.0.5",
+    "scikit-survival": "0.26.0",
+    "jax-metal": "0.1.1"
+  },
+  "device": [
+    "METAL:0"
+  ],
+  "blas_threads": 4,
+  "repeats": 1,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 339,
+    "m_q": 27338,
+    "d": 54675,
+    "block_size": 1,
+    "node_block": 3926,
+    "n_blocks": 339,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 8588880624,
+    "full_peak_bytes": 20269313927568,
+    "mode": "fixed"
+  },
+  "integration_seconds": 13.086468624998815,
+  "checkpoint_io_seconds": 0.0009776660008355975,
+  "active_integration_wall_seconds": 13.087446290999651,
+  "attempts": 1,
+  "rule_preparation": {
+    "source": "benchmarks/results/cox_gpu_tolerance/eps_1e6_followup/gse24080/quadrature_rule.npz",
+    "sha256": "f74e19d24dc21056f1446d8f91fb069fa1c86e21c2c47114b58ddfe0eb53cd79",
+    "m_q": 27338,
+    "preparation": "Fresh rule generated on CPU and saved",
+    "fresh_rule_seconds": 10.97469870900386,
+    "preparation_wall_seconds": 10.976159625017317,
+    "symmetry_max_error": 0.0,
+    "moment_max_error": 5.572833861045012e-13
+  },
+  "timing_scope": "Factor preparation, planning, GPU transfers/JIT/core, synchronized host float64 accumulation; excludes explainer construction, rule preparation, checkpoint IO, validation and resume input loads",
+  "resume_timing_scope": "Accumulated recorded active work across attempts; excludes downtime and any uncheckpointed work lost to interruption",
+  "reference": "Independent float64 64-node quadrature with certified bound <1e-10; NOT exact-degree reference",
+  "qualification": "Full exact-degree quadrature in real arithmetic; GPU FP32 with host FP64 block accumulation",
+  "efficiency_residual": 1.7311528533464298,
+  "relative_l2_error": 3.5799203386830475e-06,
+  "max_absolute_error": 0.003131076492650209,
+  "top20_overlap": 1.0
+}

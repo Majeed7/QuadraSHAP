@@ -1,0 +1,43 @@
+\subsection{High-dimensional experiments with QuadraSHAP}
+\label{sec:high-dimensional-quadrashap}
+
+To assess whether Shapley attribution remains practical when the number of
+features greatly exceeds the number of patients, we consider GSE24080
+multiple-myeloma gene expression and TCGA lower-grade glioma DNA methylation
+\cite{geo_gse24080,tcga_lgg_methylation}. Genome-wide assays yield 54,675
+expression probe sets and 396,065 methylation sites, respectively, whereas
+the training cohorts contain only 339 and 383 patients. We fit ridge-penalized
+Cox models and explain their relative hazard, whose feature-wise product
+structure makes QuadraSHAP directly applicable. Each explanation uses the
+same 30 training-background patients; results summarize one timed call for
+each of five distinct held-out patients. We compare degree-exact quadrature
+with automatically selected node counts for
+$\varepsilon\in\{10^{-1},10^{-2},10^{-3}\}$ on an Apple M4 Pro, using
+GPU FP32 and CPU FP64 arithmetic.
+
+Table~\ref{tab:cox-device-exact} shows that degree-exact GPU computation
+remains manageable: 27,338 and 198,033 nodes require
+1.17\,s and
+66.38\,s per patient, respectively.
+The certified approximation reduces these latencies to
+85--90\,ms and
+310--320\,ms,
+supporting interactive, on-demand explanations after warm-up and
+quadrature-rule setup. CPU FP64 provides a measured alternative when
+higher numerical precision is required, with approximate latencies of
+156--164\,ms and
+992--1035\,ms, respectively.
+
+For a matched numerical comparison, each approximation is compared with
+the degree-exact output from its own device and precision. All selected
+rules satisfy their analytical quadrature bounds, but FP32 arithmetic
+limits agreement at the tightest tolerance: at $\varepsilon=10^{-3}$,
+4/5 GSE24080 and
+2/5 TCGA GPU cases meet that threshold.
+CPU FP64 meets its same-backend threshold in 30/30 cases.
+The guarantee concerns quadrature for the fixed fitted model and
+empirical background; it excludes rounding and population-background
+approximation. Agreement with degree-exact floating-point output is
+therefore an empirical consistency check, not an absolute error proof.
+Full settings, timing provenance, and error definitions are given in
+Appendix~\ref{app:cox-device-exact}.

@@ -1,0 +1,63 @@
+{
+  "manifest": {
+    "dataset": "gse24080",
+    "patient": 0,
+    "patient_id": "16574",
+    "d": 54675,
+    "background_size": 4,
+    "m_q": 64,
+    "exact_nodes": 27338,
+    "exact_degree": false,
+    "backend": "logspace_jax",
+    "memory_budget": "8GB",
+    "block_size": 1,
+    "source_sha256": {
+      "src/quadrashap/product_games/shapley.py": "d2a9c2fe3eaf8c74f1febd190115fdd78f3c698b3a3bdb03278914404b200736",
+      "src/quadrashap/product_games/blocks.py": "e363268f5ab10e251ce5e07374cd79660029e0d9935c77d9f3dfe0a30ff81884",
+      "src/quadrashap/multiplicative/engine.py": "24a60d0b9afb1389b5a8678ad0a9e13f8151aa35fb9c1ef79728eec381a9aa1d",
+      "src/quadrashap/multiplicative/glm.py": "ec77e7d21240cd99b80f59b3e2ec172498ef0fb8ccfef7ee35e252d55032adb9",
+      "benchmarks/cox_full_exact_gpu.py": "6e5411e28dd42905c34770b99c916a488a094137a054ce86ed5ff72348323e4a"
+    },
+    "input_sha256": {
+      "benchmarks/results/cox_background_sensitivity/gse24080/inputs.npz": "d21c465e7d8b9d69fde6a649cb53b1349a1e21928c7f4f19bb58a0b1d587af7f",
+      "benchmarks/results/cox_background_sensitivity/gse24080/training_background.npy": "ab7f71060131fb3bd744f1a74a5e4afa846f92ec224c29d04a7f54b84d262832",
+      "benchmarks/results/cox_background_sensitivity/gse24080/reference_full_64.npy": "90ee8ae58e21a4aedc81e5b5e1c11ab6b2d8702e2afd5eee66869edb1521f6ba"
+    },
+    "rule_sha256": "a3160c56d245803b2ebcbe9a591fb98134f566d3f14cc71a75f8b9a33de13e77",
+    "packages": {
+      "jax": "0.4.34",
+      "jaxlib": "0.4.34",
+      "numpy": "1.26.4",
+      "scipy": "1.17.1",
+      "pandas": "3.0.5",
+      "scikit-survival": "0.26.0",
+      "jax-metal": "0.1.1"
+    },
+    "device": [
+      "METAL:0"
+    ],
+    "blas_threads": 4
+  },
+  "generation": 2,
+  "attempts": 2,
+  "block": 4,
+  "next_node": 0,
+  "integration_compute_seconds": 0.12580537400208414,
+  "checkpoint_io_seconds": 0.002785209013381973,
+  "phase": "complete",
+  "completed_fraction": 1.0,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 4,
+    "m_q": 64,
+    "d": 54675,
+    "block_size": 1,
+    "node_block": 64,
+    "n_blocks": 4,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 142593936,
+    "full_peak_bytes": 570375744,
+    "mode": "fixed"
+  },
+  "active_integration_wall_seconds": 0.1285905830154661
+}

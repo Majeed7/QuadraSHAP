@@ -1,0 +1,27 @@
+{
+  "manifest": {
+    "dataset": "stream_validation"
+  },
+  "generation": 1,
+  "attempts": 1,
+  "block": 3,
+  "next_node": 0,
+  "integration_compute_seconds": 0.0003942500043194741,
+  "checkpoint_io_seconds": 0.0005054159846622497,
+  "phase": "complete",
+  "completed_fraction": 1.0,
+  "block_plan": {
+    "backend": "logspace_jax",
+    "n_pairs": 3,
+    "m_q": 10,
+    "d": 19,
+    "block_size": 1,
+    "node_block": 10,
+    "n_blocks": 3,
+    "budget_bytes": 8589934592,
+    "estimated_peak_bytes": 8752,
+    "full_peak_bytes": 26256,
+    "mode": "fixed"
+  },
+  "active_integration_wall_seconds": 0.0008996659889817238
+}

@@ -1,0 +1,45 @@
+{
+  "dataset": "gse24080",
+  "n_train": 339,
+  "n_test": 214,
+  "d": 54675,
+  "background_size": 100,
+  "selection_seed": 42,
+  "selection": "First 100 entries of the saved seed-42 permutation of training rows, without replacement",
+  "nesting": "First 30 background rows, indices and dataset rows exactly equal the saved B=30 study",
+  "background_weights": "Uniform, 1/100 per background patient",
+  "patient_ids": [
+    "16574",
+    "16570",
+    "16518",
+    "16600",
+    "9995"
+  ],
+  "test_rows": [
+    42,
+    44,
+    45,
+    46,
+    47
+  ],
+  "patient_selection": "Same five held-out patients and preprocessed inputs as the saved B=30 study",
+  "test_data_used_for_background": false,
+  "model_refitted": false,
+  "model_sha256": "49cdc857a7984d7d8b44af9266587ecde58eed713110fa0d46064e623c9019bd",
+  "source_sha256": {
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background30_gpu/design.json": "c76cdd24ce629a7a5304843d20c7befff6904b71fa32b1d16a005bd11172f75e",
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background30_gpu/gse24080/inputs.npz": "a80eb70b1029bb1d25b3d337b9df20314beaef95519f44387a4fb7cc261f2f3f",
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/design.json": "2a933db6a1cb3695eb7280b9cb15e5ce65f9e8bcfdd2195bb416e78d7305f501",
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/inputs.npz": "d21c465e7d8b9d69fde6a649cb53b1349a1e21928c7f4f19bb58a0b1d587af7f",
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/training_background.npy": "ab7f71060131fb3bd744f1a74a5e4afa846f92ec224c29d04a7f54b84d262832",
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_background_sensitivity/gse24080/background_selection.csv": "a6b6fc3c8a0b47fbbbe565fb23bc8c8ba0fc69eb3aa122c5064dff53cb2993d0",
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/gse24080/model_and_preprocessing.npz": "49cdc857a7984d7d8b44af9266587ecde58eed713110fa0d46064e623c9019bd",
+    "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_gpu_tolerance/gse24080/explanation_inputs.npz": "31a0a1ac33e43f0465d97a8a146ab95f129ac06763b227f4b47079da24338b64"
+  },
+  "preparation_script_sha256": "29a225288e4f9ee5af5d391609ca6a37baa59ba71840ff6f95f3842f981cbd33",
+  "prepared_inputs_sha256": "b54ac68e45ea0f3ee20a70dc1f346453cb32d15ef0e9e6805b598a7daf638d1b",
+  "selection_sha256": {
+    "background_selection.csv": "f18fbee32f986c6115a251d91373e85ea39fc5a3f46c85a04724859e2af09b1e",
+    "patient_selection.csv": "c221ce0b7be21900deb18b859e43556adb5cb767e1418bca0d92bcbc01420120"
+  }
+}

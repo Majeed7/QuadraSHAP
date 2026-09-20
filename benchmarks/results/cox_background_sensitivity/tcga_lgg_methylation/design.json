@@ -1,0 +1,26 @@
+{
+  "dataset": "tcga_lgg_methylation",
+  "n_total": 511,
+  "n_train": 383,
+  "n_test": 128,
+  "d": 396065,
+  "d_per_training_patient": 1034.11227154047,
+  "background_seed": 42,
+  "patient_ids": [
+    "TCGA-CS-6665",
+    "TCGA-DU-A5TS",
+    "TCGA-HT-8113"
+  ],
+  "model_refitted": false,
+  "historical_four_background_rows_reproduced_bitwise": true,
+  "test_data_used_for_background": false,
+  "preparation_seconds": 3.278179999997519,
+  "source_sha256": {
+    "model_and_preprocessing.npz": "78e49f60b47ec388b0d56afd24e95bb529e63e20869d2220cc07de3d014fc035",
+    "explanation_inputs.npz": "8a1e4f97994d3e57f363d72e4851c79cc7457a14625db740defb5caeea799de1"
+  },
+  "initial_pilot_background_size": 100,
+  "primary_background_size": 383,
+  "primary_background_selection": "All training rows, uniformly weighted",
+  "pilot_selection": "First 100 entries of seed-42 permutation of training rows; uniform sampling without replacement"
+}

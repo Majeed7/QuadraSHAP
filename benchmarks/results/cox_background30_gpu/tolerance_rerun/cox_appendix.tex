@@ -1,0 +1,143 @@
+\subsection{High-dimensional Cox experiments: settings and numerical validation}
+\label{app:cox-high-dimensional}
+
+\paragraph{Datasets and motivation.}
+These experiments test attribution at the dimensions produced by
+genome-wide assays, where each patient contributes many molecular
+measurements but the number of patients with survival follow-up is
+comparatively small. GSE24080 contains multiple-myeloma expression
+measurements, and TCGA lower-grade glioma (LGG) contains DNA methylation
+measurements \cite{geo_gse24080,tcga_lgg_methylation}.
+After filtering for valid overall-survival outcomes, the cohorts contain
+553 and 511 patients, with 54,675 expression probe sets and 396,065
+methylation sites, respectively. These dimensions count individual probes
+or sites, without gene-level aggregation. We use the supplied 339/214
+training/validation split for GSE24080 and a 383/128 training/test split
+for TCGA LGG, stratified by event status with seed 42. Missing entries
+are imputed using training medians, and centering and scaling are fitted
+using training observations only.
+
+\paragraph{Survival model and explanation target.}
+We use Cox proportional-hazards models to incorporate patients whose
+death has not been observed by the end of follow-up, called right-censored
+observations. The model separates a common baseline hazard $h_0(t)$
+from a patient-specific relative hazard:
+\[
+ h(t\mid x)=h_0(t)f(x),\qquad
+ f(x)=\exp(\beta^\top x)=\prod_{j=1}^{d}\exp(\beta_jx_j).
+\]
+To stabilize estimation when $d\gg n$, a ridge penalty shrinks the
+coefficients towards zero; the implementation's penalty parameter is
+fixed in advance at $\alpha=0.01d$, without a hyperparameter search.
+We use the Breslow approximation for patients with equal recorded event
+times. All retained features have nonzero fitted coefficients.
+The attribution target is the relative hazard $f(x)$, rather than the
+log-relative hazard or a survival probability at a chosen time horizon.
+Its feature-wise product structure is the property used by QuadraSHAP.
+
+\paragraph{Background game and patient selection.}
+To make comparisons refer to the same attribution problem, we fix 30
+background patients sampled without replacement from the training set
+using seed 42. For a feature subset $S$, we replace absent features
+with entries from each background row $z^{(b)}$ and average the
+resulting predictions:
+\[
+ v_x(S)=\frac{1}{30}\sum_{b=1}^{30}
+ f\bigl(x_S,z^{(b)}_{\overline S}\bigr).
+\]
+Here, $\overline S$ denotes the absent features. This defines a uniformly
+weighted sum of product games. We explain the first five held-out
+patients in each saved split, without selection based on their outcomes.
+The fitted coefficients, preprocessing, background rows, and patient
+inputs are identical across methods. The quadrature guarantee concerns
+this fixed empirical game; it does not bound the difference between a
+30-row background and the population background distribution.
+
+\paragraph{Quadrature rules and certification.}
+We compare the Gauss--Legendre rule with
+$m_{\mathrm{exact}}=\lceil d/2\rceil$ nodes against patient-specific
+rules selected for $\varepsilon\in\{10^{-1},10^{-2},10^{-3}\}$.
+The exact-degree rule integrates the relevant polynomial in real
+arithmetic; it does not enumerate all $2^d$ coalitions or eliminate
+floating-point rounding. For patient $p$, let $\phi_p$ denote the
+Shapley vector of the fixed background game and $\phi_{m_p,p}$ the
+quadrature result in real arithmetic. Node selection uses the analytical
+bound $C_p$ to ensure
+\[
+ \|\phi_{m_p,p}-\phi_p\|_\infty\le C_p\le\varepsilon,
+ \qquad C_{\max}=\max_{p=1,\ldots,5}C_p.
+\]
+The infinity norm measures the largest absolute error among features;
+the tolerance is therefore absolute in the units of relative-hazard
+attribution. Every selected rule satisfies this bound. The approximate
+node counts span 44--54 for GSE24080 and 37--51 for TCGA LGG across
+patients and tolerances, compared with 27,338 and 198,033 exact nodes.
+
+\paragraph{Hardware, timing, and cached setup.}
+We evaluate the GPU implementation on an Apple M4 Pro using JAX and
+jaxlib 0.4.34 with jax-metal 0.1.1. The numerical kernel uses FP32,
+with FP64 host accumulation, an 8\,GiB memory-planning budget, and one
+background row per block.
+An untimed call warms up each distinct dataset/node-count configuration.
+We then record one synchronized explanation call per patient and method,
+reporting the mean and sample standard deviation across the five
+patients. The standard deviation describes variation across patients,
+not uncertainty from repeated calls for one patient. Timings include
+automatic node selection for approximate runs, data transfers, and host
+accumulation; they exclude model fitting, warm-up, and quadrature-rule
+construction. Approximation rows are fresh measurements; exact-degree
+rows reuse the matched saved measurements after verifying the same
+inputs, numerical source hashes, software versions, and memory plan.
+Previously measured CPU construction of the cached exact rules took
+10.97\,s and 561.92\,s, respectively. Fresh approximate-rule
+construction took 0.386--0.563\,ms, reported as the range of medians
+over five constructions per rule. Caching amortizes rule construction
+across patients; each explanation still evaluates the quadrature
+integrand for every background row.
+
+\paragraph{Runtime and comparison with exact-degree GPU results.}
+The mean exact-degree latencies are 1.172\,s for GSE24080 and
+66.377\,s for TCGA LGG. Across the three tolerances, approximate
+means range from 0.085--0.090\,s and 0.310--0.320\,s,
+corresponding to approximately $13$--$14\times$ and
+$207$--$214\times$ speedups relative to the reused exact means.
+Table~\ref{tab:cox-high-dimensional} reports the largest discrepancy
+between the floating-point approximation and its matching GPU
+exact-degree output,
+\[
+ \Delta_{\mathrm{GPU}}=
+ \max_p\|\widehat\phi^{\mathrm{GPU}}_{m_p,p}
+ -\widehat\phi^{\mathrm{GPU}}_{\mathrm{exact},p}\|_\infty.
+\]
+For both $10^{-1}$ and $10^{-2}$, all five patients per dataset
+meet their threshold under this comparison. At $10^{-3}$, only
+4/5 GSE24080 and 2/5 TCGA patients do so; the largest discrepancies
+are $1.31\times10^{-3}$ and $5.95\times10^{-3}$.
+
+\paragraph{Independent precision checks.}
+Agreement between two FP32 outputs can conceal numerical errors shared
+by both computations. We therefore compare the GPU approximations with
+a separate 64-node FP64 reference using numerically stable
+\texttt{log1p}/\texttt{expm1} expressions. Its analytical quadrature
+bounds are below $10^{-10}$, and a 96-node cross-check for the first
+patient of each cohort changes the reference by less than $10^{-12}$.
+This is a high-accuracy numerical reference, not a full degree-exact
+FP64 evaluation. Relative to it, GPU pass counts for
+$\varepsilon=(10^{-1},10^{-2},10^{-3})$ are $(5,5,1)$ out of five
+for GSE24080 and $(5,3,0)$ for TCGA LGG. In particular, TCGA at
+$10^{-2}$ passes for all patients against the GPU exact-degree
+output, but only three against the independent reference, with a worst
+error of $3.52\times10^{-2}$.
+
+To assess the effect of arithmetic precision, we also evaluate the same
+selected node counts and fixed inputs on CPU using FP64 and the same
+parallel-reduction formula as the GPU kernel. All 30 patient--tolerance
+cases meet their thresholds; the largest discrepancies from the
+independent reference are $1.28\times10^{-11}$ for GSE24080 and
+$1.59\times10^{-10}$ for TCGA LGG. These are separate accuracy
+diagnostics and are not paired with the GPU timings. Their success
+supports the adequacy of the selected quadrature rules in these cases,
+while the FP32 comparisons expose a numerical accuracy limitation.
+The analytical certificate controls quadrature approximation only;
+these empirical precision checks do not extend it to a rigorous
+floating-point error guarantee.

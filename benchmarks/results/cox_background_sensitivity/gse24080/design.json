@@ -1,0 +1,26 @@
+{
+  "dataset": "gse24080",
+  "n_total": 553,
+  "n_train": 339,
+  "n_test": 214,
+  "d": 54675,
+  "d_per_training_patient": 161.28318584070797,
+  "background_seed": 42,
+  "patient_ids": [
+    "16574",
+    "16570",
+    "16518"
+  ],
+  "model_refitted": false,
+  "historical_four_background_rows_reproduced_bitwise": true,
+  "test_data_used_for_background": false,
+  "preparation_seconds": 0.3624495840012969,
+  "source_sha256": {
+    "model_and_preprocessing.npz": "49cdc857a7984d7d8b44af9266587ecde58eed713110fa0d46064e623c9019bd",
+    "explanation_inputs.npz": "31a0a1ac33e43f0465d97a8a146ab95f129ac06763b227f4b47079da24338b64"
+  },
+  "initial_pilot_background_size": 100,
+  "primary_background_size": 339,
+  "primary_background_selection": "All training rows, uniformly weighted",
+  "pilot_selection": "First 100 entries of seed-42 permutation of training rows; uniform sampling without replacement"
+}

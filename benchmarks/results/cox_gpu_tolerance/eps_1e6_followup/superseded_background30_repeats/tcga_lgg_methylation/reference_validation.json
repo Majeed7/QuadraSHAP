@@ -1,0 +1,13 @@
+{
+  "B": 30,
+  "m_q": 64,
+  "quadrature_bounds": [
+    2.4475874509666833e-28,
+    5.18167687532756e-32,
+    1.7924790147834142e-32
+  ],
+  "reference_seconds": 13.048840750008821,
+  "crosscheck_seconds": 6.452408624987584,
+  "crosscheck_max_absolute_difference": 7.958078640513122e-13,
+  "reference_type": "Independent float64 tightly bounded quadrature; not full exact-degree reference"
+}

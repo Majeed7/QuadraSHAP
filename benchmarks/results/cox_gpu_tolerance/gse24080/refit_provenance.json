@@ -1,0 +1,45 @@
+{
+  "bitwise_identical_to_previous_fit_and_explanation_inputs": true,
+  "max_coefficient_difference": 0.0,
+  "reference_source": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/benchmarks/results/cox_survival/gse24080",
+  "reference_sha256": {
+    "model_and_preprocessing.npz": "49cdc857a7984d7d8b44af9266587ecde58eed713110fa0d46064e623c9019bd",
+    "explanation_inputs.npz": "31a0a1ac33e43f0465d97a8a146ab95f129ac06763b227f4b47079da24338b64",
+    "exact_attributions_patient_0.npy": "2ccb312ee75aa98792957ef6c38ad488ee1c212c309dc7e5784f6770d9674f86"
+  },
+  "fit_environment": {
+    "utc": "2026-09-13T10:54:34.172086+00:00",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.15",
+    "executable": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/.venv/bin/python",
+    "devices": [
+      "TFRT_CPU_0"
+    ],
+    "backend": "cpu",
+    "jit_disabled": false,
+    "blas": [
+      {
+        "user_api": "openmp",
+        "internal_api": "openmp",
+        "num_threads": 4,
+        "prefix": "libomp",
+        "filepath": "/Users/siulunchau/Library/Mobile Documents/com~apple~CloudDocs/Documents/research_projects/current/QuadraSHAP/.venv/lib/python3.13/site-packages/sklearn/.dylibs/libomp.dylib",
+        "version": null
+      }
+    ],
+    "packages": {
+      "jax": "0.4.38",
+      "jaxlib": "0.4.38",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "pandas": "3.0.5",
+      "scikit-survival": "0.28.0"
+    },
+    "source_sha256": {
+      "src/quadrashap/product_games/shapley.py": "d2a9c2fe3eaf8c74f1febd190115fdd78f3c698b3a3bdb03278914404b200736",
+      "src/quadrashap/product_games/blocks.py": "e363268f5ab10e251ce5e07374cd79660029e0d9935c77d9f3dfe0a30ff81884",
+      "src/quadrashap/multiplicative/engine.py": "24a60d0b9afb1389b5a8678ad0a9e13f8151aa35fb9c1ef79728eec381a9aa1d",
+      "src/quadrashap/multiplicative/glm.py": "ec77e7d21240cd99b80f59b3e2ec172498ef0fb8ccfef7ee35e252d55032adb9"
+    }
+  }
+}
