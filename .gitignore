@@ -95,6 +95,7 @@ models/
 # Downloaded research datasets and generated experiment matrices.
 data/experiments/raw/
 data/experiments/processed/
+data/experiments/validation_*.json
 
 # Reproducible Cox model states and full attribution arrays (retained locally).
 benchmarks/results/cox_survival/*/*.npz

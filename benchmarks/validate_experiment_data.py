@@ -1,6 +1,7 @@
 """Verify downloaded bytes, prepared dimensions, endpoint coding, and source values."""
 from __future__ import annotations
 
+import argparse
 import csv
 from datetime import datetime, timezone
 import gzip
@@ -12,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from experiment_data import load_bearing, load_bearing_landmark, load_motorimagery, load_survival, TrainingPreprocessor
-from fetch_experiment_data import DATA, DATASETS, OPENML, sha256
+from fetch_experiment_data import DATA, DATASETS, FILES, OPENML, sha256
 from prepare_experiment_data import arff_header
 
 
@@ -50,18 +51,33 @@ def check_source_values(name, dataset):
     return f"{len(positions)} source features matched by ID for first/middle/last retained patient"
 
 
-def main():
+def expected_source_paths(datasets):
+    paths = set()
+    for name in datasets:
+        if name in OPENML:
+            for source_id in OPENML[name]:
+                paths.update({f"raw/openml/{source_id}.json", f"raw/openml/{source_id}.arff"})
+        else:
+            paths.update(f"raw/{name}/{filename}" for filename, _ in FILES[name])
+    return paths
+
+
+def main(datasets=None):
+    datasets = tuple(DATASETS if datasets is None else datasets)
     manifest = json.loads((DATA / "manifest.json").read_text())
-    assert set(manifest["datasets"]) == set(DATASETS), "Prepare all datasets first"
-    sources = manifest["source_files"]
-    assert len(sources) == 23, "Missing source receipts"
+    missing_datasets = set(datasets) - set(manifest["datasets"])
+    assert not missing_datasets, f"Prepare requested datasets first: {sorted(missing_datasets)}"
+    expected_sources = expected_source_paths(datasets)
+    sources = [entry for entry in manifest["source_files"] if entry["path"] in expected_sources]
+    assert {entry["path"] for entry in sources} == expected_sources, "Missing source receipts"
     for entry in sources:
         path = DATA / entry["path"]
         assert path.stat().st_size == entry["bytes"]
         assert sha256(path) == entry["sha256"], f"Raw checksum mismatch: {path}"
     report = {"validated_utc": datetime.now(timezone.utc).isoformat(),
               "raw_files_verified": len(sources), "datasets": {}, "prepared_files": []}
-    for name, metadata in manifest["datasets"].items():
+    for name in datasets:
+        metadata = manifest["datasets"][name]
         folder = DATA / metadata["folder"]
         assert json.loads((folder / "metadata.json").read_text()) == {
             key: value for key, value in metadata.items() if key != "folder"
@@ -127,16 +143,21 @@ def main():
             if path.is_file():
                 report["prepared_files"].append({"path": str(path.relative_to(DATA)),
                                                   "bytes": path.stat().st_size, "sha256": sha256(path)})
-    small = load_survival("tcga_laml")
-    preprocessor = TrainingPreprocessor.fit(small.X[:24])
-    assert np.isfinite(preprocessor.transform(small.X[24:])).all()
-    report["preprocessing_smoke_check"] = {
-        "dataset": "tcga_laml", "training_rows": 24, "held_out_rows": 11,
-        "retained_features": int(preprocessor.keep.sum()), "finite_held_out_output": True,
-    }
-    (DATA / "validation.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
-    print("All checks passed; wrote data/experiments/validation.json", flush=True)
+    if "tcga_laml" in datasets:
+        small = load_survival("tcga_laml")
+        preprocessor = TrainingPreprocessor.fit(small.X[:24])
+        assert np.isfinite(preprocessor.transform(small.X[24:])).all()
+        report["preprocessing_smoke_check"] = {
+            "dataset": "tcga_laml", "training_rows": 24, "held_out_rows": 11,
+            "retained_features": int(preprocessor.keep.sum()), "finite_held_out_output": True,
+        }
+    complete = set(datasets) == set(DATASETS)
+    output = DATA / ("validation.json" if complete else f"validation_{'_'.join(datasets)}.json")
+    output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
+    print(f"All checks passed; wrote {output.relative_to(DATA.parent.parent)}", flush=True)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--datasets", nargs="+", choices=DATASETS, default=list(DATASETS))
+    main(parser.parse_args().datasets)

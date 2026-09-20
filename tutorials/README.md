@@ -53,6 +53,11 @@ notebook uses the NumPy log-space backend, so neither notebook requires a GPU.
 
 ## High-dimensional survival benchmarks
 
+Start with the [Cox reproducibility guide](../benchmarks/COX_REPRODUCIBILITY.md).
+It gives the public dataset URLs and an ordered fetch, preparation, validation,
+CPU, and optional Apple-GPU workflow. The large matrices are generated locally
+and are intentionally not stored in Git.
+
 [`cox_background_sensitivity.ipynb`](cox_background_sensitivity.ipynb) explains
 the saved Cox models using every training patient as the background: 339 for
 GSE24080 and 383 for TCGA LGG methylation. It runs a JAX-Metal tolerance and

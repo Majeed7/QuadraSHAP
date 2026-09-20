@@ -25,7 +25,7 @@ def file_hash(path):
 def run_exact_followup(root):
     root = Path(root)
     output = root / "benchmarks/results/cox_survival/tcga_lgg_methylation"
-    if (output / "exact_timing.json").exists():
+    if (output / "exact_timing.json").exists() and (output / "exact_attributions_patient_0.npy").exists():
         raise FileExistsError("An exact result already exists; preserve or move it before a new timed run")
     fit = json.loads((output / "fit_summary.json").read_text())
     with np.load(output / "model_and_preprocessing.npz", allow_pickle=False) as state:

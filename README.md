@@ -335,6 +335,14 @@ state is stored in global memory, while 7- or 15-node connected components are
 reconstructed in shared memory. The compact internal-node kernel remains the
 lower-latency path below the measured 1,536-row crossover.
 
+### 5. Cox survival benchmarks
+
+The Cox experiments use the public GSE24080 and TCGA LGG methylation cohorts.
+The datasets are downloaded and prepared locally rather than stored in Git.
+See the [Cox reproducibility guide](benchmarks/COX_REPRODUCIBILITY.md) for the
+tested environments, source URLs, validation commands, CPU workflow, optional
+Apple-GPU workflow, and interpretation of the different background studies.
+
 ## Precomputed Results
 
 Saved benchmark artifacts are included for inspection without rerunning experiments:
@@ -342,6 +350,8 @@ Saved benchmark artifacts are included for inspection without rerunning experime
 - `benchmarks/results/mq/` — convergence CSVs and figures for the quadrature-node sweep
 - `benchmarks/results/text/` — tables and plots from the text-classification benchmark
 - `benchmarks/results/gpu/` — GPU tables and optimized batch-scaling results
+- `benchmarks/results/cox_survival/` — CPU Cox fits, timing tables, and figures
+- `benchmarks/results/cox_gpu_tolerance/` — Apple-GPU Cox tolerance results
 
 ## Implementation Notes
 

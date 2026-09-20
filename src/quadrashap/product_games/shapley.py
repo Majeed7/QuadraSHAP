@@ -146,6 +146,81 @@ class ProductGamesShapleyNumpy:
             acc += (w[q0:q0 + nb, None, None] * pref).sum(axis=0)
         return K * acc
 
+    def phi_matrix_positive_logspace(
+        self, log_factors: np.ndarray, m_q: int, *, log_multiplier=None,
+        node_block_size: int = 64, nodes_weights=None, timeout_seconds=None,
+        progress_callback=None,
+    ) -> np.ndarray:
+        """Evaluate positive product games from logarithmic factors in bounded memory.
+
+        Rows encode ``v(S) = exp(log_multiplier + sum(log_factors[S]))``.
+        Supplying logarithms avoids overflowing the individual positive factors,
+        while node blocking bounds the temporary array to ``node_block_size * d``.
+        ``timeout_seconds`` bounds integration time, excluding rule construction.
+        """
+        from time import perf_counter
+
+        log_u = np.asarray(log_factors, dtype=np.float64)
+        if log_u.ndim != 2 or not np.isfinite(log_u).all():
+            raise ValueError("log_factors must be a finite (games, features) matrix")
+        if not isinstance(m_q, (int, np.integer)) or m_q < 1:
+            raise ValueError("m_q must be a positive integer")
+        if not isinstance(node_block_size, (int, np.integer)) or node_block_size < 1:
+            raise ValueError("node_block_size must be a positive integer")
+        if timeout_seconds is not None and timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        if nodes_weights is None:
+            nodes, weights = _gauss_legendre_01_numpy(m_q)
+        else:
+            nodes, weights = (np.asarray(value, dtype=np.float64) for value in nodes_weights)
+        if (nodes.shape != (m_q,) or weights.shape != (m_q,)
+                or not np.isfinite(nodes).all() or not np.isfinite(weights).all()
+                or not ((nodes > 0) & (nodes < 1)).all() or not (weights > 0).all()
+                or not np.isclose(weights.sum(), 1, rtol=1e-12, atol=1e-14)):
+            raise ValueError("Expected a positive quadrature rule on (0, 1) with unit weight")
+        games, features = log_u.shape
+        multiplier = np.zeros(games) if log_multiplier is None else np.broadcast_to(
+            np.asarray(log_multiplier, dtype=np.float64), (games,)
+        )
+        if not np.isfinite(multiplier).all():
+            raise ValueError("log_multiplier must be finite")
+        result = np.zeros((games, features))
+        started = perf_counter()
+        last_progress = started
+        for row, delta in enumerate(log_u):
+            with np.errstate(divide="ignore"):
+                log_difference = np.maximum(delta, 0) + np.log(-np.expm1(-np.abs(delta)))
+            use_direct_factors = np.abs(delta).max(initial=0) < 30
+            if use_direct_factors:
+                differences = np.expm1(delta)
+            for start in range(0, m_q, node_block_size):
+                if timeout_seconds is not None and perf_counter() - started > timeout_seconds:
+                    raise TimeoutError(f"Integration exceeded {timeout_seconds}s at game {row}, node {start}")
+                node = nodes[start:start + node_block_size, None]
+                if use_direct_factors:
+                    log_terms = node * differences[None, :]
+                    np.log1p(log_terms, out=log_terms)
+                else:
+                    log_terms = np.logaddexp(np.log1p(-node), np.log(node) + delta[None, :])
+                log_product = log_terms.sum(axis=1) + multiplier[row]
+                np.negative(log_terms, out=log_terms)
+                log_terms += log_product[:, None]
+                log_terms += log_difference[None, :]
+                log_terms += np.log(weights[start:start + len(node), None])
+                with np.errstate(over="raise", invalid="raise"):
+                    np.exp(log_terms, out=log_terms)
+                result[row] += log_terms.sum(axis=0)
+                if progress_callback is not None:
+                    now = perf_counter()
+                    completed_nodes = start + len(node)
+                    if completed_nodes == m_q or now - last_progress >= 30:
+                        progress_callback(row, completed_nodes, games, m_q)
+                        last_progress = now
+            result[row] *= np.sign(delta)
+        if not np.isfinite(result).all():
+            raise FloatingPointError("Attribution is outside the float64 range")
+        return result
+
     def phi_matrix_logspace(self, K: np.ndarray, m_q: int, Ut=None, eps: float = 1e-12) -> np.ndarray:
         """Compute Phi (m,d) using the log-space shared product.
 
