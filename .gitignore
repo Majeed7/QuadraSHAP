@@ -9,6 +9,7 @@ backup/
 .uv-cache/
 .tools/
 model/
+results/
 
 # Python cache
 __pycache__/
